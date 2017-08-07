@@ -2,6 +2,7 @@
 layout: default
 title: Home
 ---
+#http://blog.csdn.net/zhuzongpeng/article/details/76136164
 
 <div class="posts">
   {% for post in paginator.posts %}
