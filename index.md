@@ -6,6 +6,6 @@
 - admin和io命令最后调用到__nvme_submit_user_cmd 
 - nvme驱动中真正执行是nvme_probe函数，在nvme设备被侦测到的时候由kernel去调用，调用的判断原则就是>device id需要吻合
 - device，pci_dev, nvme_dev三个数据结构的继承组合关系 
-- nvme设备驱动probe中会将设备挂入nvme_ctrl_list全局链表中，这个链表在open这个nvme的字符设备时会用 
+- nvme设备驱动probe中会将设备挂入`nvme_ctrl_list`全局链表中，这个链表在open这个nvme的字符设备时会用 
 - [work queue讲解](http://www.cnblogs.com/wwang/archive/2010/10/27/1862202.html) 
 - probe的最后一步会调用nvme_reset_work函数完成nvme设备的配置操作 
