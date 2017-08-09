@@ -9,3 +9,5 @@
 - nvme设备驱动probe中会将设备挂入`nvme_ctrl_list`全局链表中，这个链表在open这个nvme的字符设备时会用 
 - [work queue讲解](http://www.cnblogs.com/wwang/archive/2010/10/27/1862202.html) 
 - probe的最后一步会调用nvme_reset_work函数完成nvme设备的配置操作 
+- `nvme_reset_work`中会依次使能pci设备，配置admin queue等基本属性，调用`nvme_init_identify`读取identify信息存入内存ctrl结构（这个函数还会配置power state和directive属性），再配置io queue，最后调用nvme_start_ctrl启动nvme设备work queue后台nvme_wq中的若干任务。
+- 提交nvme command使用函数`nvme_submit_sync_cmd` 或 `nvme_submit_user_cmd`（后者处理从用户态ioctl下发的请求），下发执行依赖了block块设备层`blk_execute_rq`等接口
