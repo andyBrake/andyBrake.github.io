@@ -11,3 +11,7 @@
 - probe的最后一步会调用nvme_reset_work函数完成nvme设备的配置操作 
 - `nvme_reset_work`中会依次使能pci设备，配置admin queue等基本属性，调用`nvme_init_identify`读取identify信息存入内存ctrl结构（这个函数还会配置power state和directive属性），再配置io queue，最后调用nvme_start_ctrl启动nvme设备work queue后台nvme_wq中的若干任务。
 - 提交nvme command使用函数`nvme_submit_sync_cmd` 或 `nvme_submit_user_cmd`（后者处理从用户态ioctl下发的请求），下发执行依赖了block块设备层`blk_execute_rq`等接口
+
+
+# LLD3收获：
+- [memory barrier](http://www.wowotech.net/kernel_synchronization/memory-barrier.html)
