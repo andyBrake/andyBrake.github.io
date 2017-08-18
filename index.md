@@ -15,3 +15,4 @@
 
 # LLD3收获：
 - [memory barrier](http://www.wowotech.net/kernel_synchronization/memory-barrier.html)
+- all tasklet code must be atomic, but faster; workqueue allowed to sleep.
