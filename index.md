@@ -13,5 +13,5 @@
 - subsystem最细内核已经移除，只是对kset的包装;
 - binary attributes一般只有在firmware upload时使用，需要使用特殊结构bin_attribute，支持二进制读写，普通的attributes只支持字符串形式读写；具体可以参考[这里](http://www.wowotech.net/device_model/dm_sysfs.html)
 - 热插拔事件由kobject_add 和 kobject_del触发产生;kset结构内的kset_uevent_ops结构用于处理这类event；kset_uevent_ops中的filter如果0则不会产生event处理，相当于忽略本次事件；
-- bus_type表示linux内核中的总线抽象模型，device类型表示内核设备模型抽象，具体的设备类型又是这个结构的子类，比如pci_dev,usb_device;设备驱动的抽象结构是device_driver；
+- bus_type表示linux内核中的总线抽象模型，device类型表示内核设备模型抽象，具体的设备类型又是这个结构的子类，比如pci_dev,usb_device;设备驱动的抽象结构是device_driver,具体的驱动类型需要封转这个抽象结构;class是对底层具体硬件的再次抽象，基于功能的抽象，比如scsi磁盘，ata磁盘都抽象为一个class，但是他们具体怎么做class不关心，class在/sys/class中显示；属于某种class的设备描述结构为class_device，其关联上class和device;
 - 设备都被会对应到ram虚拟文件系统sysfs中，其具体作用和设计可以参考[这里](https://www.ibm.com/developerworks/cn/linux/l-cn-sysfs/index.html)
