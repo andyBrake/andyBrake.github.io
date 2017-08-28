@@ -1,6 +1,11 @@
 # [nvme驱动分析](http://blog.csdn.net/zhuzongpeng/article/details/76136164)
 
 ***
+# nvme 协议学习：
+- nvme协议规定了nvme的命令格式，command占用64Byte，前4个Byte为command Dword0，为通用格式。
+- NVMe 规范定义的 class code 是 0x010802
+- nvme 设备只使用PCIE HEADER中的BAR0，BAR1两个寄存器，合并为一个64bit的寄存器使用。
+***
 # nvme kernel driver阅读笔记:
 - nvme/host/core.c init中创建了workqueue和nvme class，以及注册了一个字符设备，这个字符设备没有write和read的ops，只有ioctrl，用于处理nvme设备的命令admin，io，reset，scan。这个字符设备的创建则是在probe流程中，调用device_create_with_groups创建
 - admin和io命令最后调用到__nvme_submit_user_cmd 
