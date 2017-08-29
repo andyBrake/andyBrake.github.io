@@ -5,6 +5,7 @@
 - nvme协议规定了nvme的命令格式，command占用64Byte，前4个Byte为command Dword0，为通用格式。
 - NVMe 规范定义的 class code 是 0x010802
 - nvme 设备只使用PCIE HEADER中的BAR0，BAR1两个寄存器，合并为一个64bit的寄存器使用。
+- nvme协议规定使用queue进行命令交互，分为admin queue和IO queue两种，每种queue都分为submission 和completion两种queue。其中admin queue只能有一个；IO queue一般是一个core一个，如果一个core分配多个IO queue则一般用于qos任务分级处理。
 ***
 # nvme kernel driver阅读笔记:
 - nvme/host/core.c init中创建了workqueue和nvme class，以及注册了一个字符设备，这个字符设备没有write和read的ops，只有ioctrl，用于处理nvme设备的命令admin，io，reset，scan。这个字符设备的创建则是在probe流程中，调用device_create_with_groups创建
