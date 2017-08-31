@@ -65,6 +65,8 @@
 
 * 启动各种work queue后，最后还有一步对所有namespace调用`blk_mq_unquiesce_queue`的操作。
 
+## 13、至此，`nvme_reset_work`工作算完成了，非常长得一个流程。
+
 - nvme的admin command的opcode列表在协议第五章，Figure 41中，共10个必选命令。
 - nvme的IO command的opcode列表在协议第六章，Figure 188中，只有3个必选命令。
 - admin和io命令最后调用到__nvme_submit_user_cmd 
@@ -79,3 +81,11 @@
 
 ***
 
+# nvme/target/core.c这个文件实现nvme设备目标端功能，相当于nvme设备命令的具体下发实现了。
+
+## nvmet_req_init 
+### nvmet_parse_connect_cmd
+### nvmet_parse_io_cmd
+### nvmet_parse_fabrics_cmd
+### nvmet_parse_discovery_cmd
+### nvmet_parse_admin_cmd
