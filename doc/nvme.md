@@ -20,23 +20,24 @@
   ## 3、设置了latency tolerance controls，具体有什么用，暂时我也没理解到。
 
 - `nvme_change_ctrl_state`功能很简单，根据当前nvme ctrl中的状态和设置的新状态，决定是否修改内存状态。在init流程中，这里会触发修改，将状态改为`NVME_CTRL_RESETTING`。
+***
 - _`nvme_reset_work`中的处理需要结合nvme协议才能了解这些步骤的原因，具体的操作流程如下：_
   ## 1、首先是disable了nvme设备，然后才能后续的配置，配置完了最后才会再启动nvme设备，这是协议规定的，可以参考协议中讲解reset的章节。
   ## 2、再调用`nvme_pci_enable`完成DMA MASK设置、pci总线中断分配、读取并配置queue depth、stride等参数。
   ## 3、调用`nvme_pci_configure_admin_queue`去配置admin queue:
 &emsp;&emsp;* 首先用`nvme_remap_bar`这个函数完成了bar的映射，这次映射的size是NVME_REG_DBS + 一个queue的大小，这个queue就是admin queue.
 	
-	* 再读取NVME_REG_VS寄存器，完成设置dev的subsystem值和写NVME_REG_CSTS寄存器；调用`nvme_disable_ctrl`关闭nvme设备，这样后面才能开始配置admin queue；
+&emsp;&emsp;* 再读取NVME_REG_VS寄存器，完成设置dev的subsystem值和写NVME_REG_CSTS寄存器；调用`nvme_disable_ctrl`关闭nvme设备，这样后面才能开始配置admin queue；
 
-	* 调用`nvme_alloc_queue`申请queue内存（注意这里的queue含义不是nvme协议的queue，而是一个封装了nvme queue的数据结构，里面包含了sq，cq队列以及一些其他控制结构），这个函数是申请queue的通用函数，这里用于申请admin queue，后续申请IO queue也是用它，这个函数内部申请nvme的queue时，由于需要保证物理地址连续，会使用`dma_zalloc_coherent`去申请内存；
+&emsp;&emsp;* 调用`nvme_alloc_queue`申请queue内存（注意这里的queue含义不是nvme协议的queue，而是一个封装了nvme queue的数据结构，里面包含了sq，cq队列以及一些其他控制结构），这个函数是申请queue的通用函数，这里用于申请admin queue，后续申请IO queue也是用它，这个函数内部申请nvme的queue时，由于需要保证物理地址连续，会使用`dma_zalloc_coherent`去申请内存；
 
-     * 申请完admin queue之后，就需要将admin queue的相关信息写入协议规定的寄存器中NVME_REG_AQA、NVME_REG_ASQ、NVME_REG_ACQ这三个寄存器；
+&emsp;&emsp;* 申请完admin queue之后，就需要将admin queue的相关信息写入协议规定的寄存器中NVME_REG_AQA、NVME_REG_ASQ、NVME_REG_ACQ这三个寄存器；
      
-     * 使能nvme设备`nvme_enable_ctrl`，具体操作就是写特定寄存器特定值，再等待一定时间。
+&emsp;&emsp;* 使能nvme设备`nvme_enable_ctrl`，具体操作就是写特定寄存器特定值，再等待一定时间。
 
-     * 最后，使用`queue_request_irq`完成中断资源的申请，nvme协议推荐使用的是MSI中断方式。
-
-  ## 4、调用`nvme_init_queue`初始化 queue：初始化sq_tail,cq_head,cq_phase,doorbell等字段
+&emsp;&emsp;* 最后，使用`queue_request_irq`完成中断资源的申请，nvme协议推荐使用的是MSI中断方式。
+***
+  ## 4、调用`nvme_init_queue`初始化 queue：初始化sq_tail,cq_head,cq_phase,doorbell等字段
   ## 5、调用`nvme_alloc_admin_tags`完成dev中blk_mq_tag_set结构的设置，这部分跟块设备驱动层有关，内部细节暂未分析
   ## 6、调用`nvme_init_identify`，使用`nvme_admin_identify = 0x06`这个opcode下发给nvme设备，读取出了identify信息，并更新到了内存结构了；设置nvme nqn信息`nvme_init_subnqn`，这个代码注释写的是“Generate a "fake" NQN per Figure 254 in NVMe 1.3 + ECN 001”应该1.3版本协议规定的内容；设置quirks，具体quirk是撒，还不太清楚；设置block的request queue的属性值，函数`nvme_set_queue_limits`，内部调用了若干块设备层的接口，详细注解可以查询LDD3块设备驱动章节；最后配置了nvme设备的APST (Autonomous Power State Transition)和directive。
 
