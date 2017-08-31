@@ -37,7 +37,7 @@
 
 &emsp;&emsp;* 最后，使用`queue_request_irq`完成中断资源的申请，nvme协议推荐使用的是MSI中断方式。
 ***
-  ## 4、调用`nvme_init_queue`初始化 queue：初始化sq_tail,cq_head,cq_phase,doorbell等字段
+## 4、调用`nvme_init_queue`初始化 queue：初始化sq_tail,cq_head,cq_phase,doorbell等字段
   ## 5、调用`nvme_alloc_admin_tags`完成dev中blk_mq_tag_set结构的设置，这部分跟块设备驱动层有关，内部细节暂未分析
   ## 6、调用`nvme_init_identify`，使用`nvme_admin_identify = 0x06`这个opcode下发给nvme设备，读取出了identify信息，并更新到了内存结构了；设置nvme nqn信息`nvme_init_subnqn`，这个代码注释写的是“Generate a "fake" NQN per Figure 254 in NVMe 1.3 + ECN 001”应该1.3版本协议规定的内容；设置quirks，具体quirk是撒，还不太清楚；设置block的request queue的属性值，函数`nvme_set_queue_limits`，内部调用了若干块设备层的接口，详细注解可以查询LDD3块设备驱动章节；最后配置了nvme设备的APST (Autonomous Power State Transition)和directive。
 
