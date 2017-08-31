@@ -24,7 +24,7 @@
   ## 1、首先是disable了nvme设备，然后才能后续的配置，配置完了最后才会再启动nvme设备，这是协议规定的，可以参考协议中讲解reset的章节。
   ## 2、再调用`nvme_pci_enable`完成DMA MASK设置、pci总线中断分配、读取并配置queue depth、stride等参数。
   ## 3、调用`nvme_pci_configure_admin_queue`去配置admin queue:
-	* 首先用`nvme_remap_bar`这个函数完成了bar的映射，这次映射的size是NVME_REG_DBS + 一个queue的大小，这个queue就是admin queue.
+&emsp;&emsp;* 首先用`nvme_remap_bar`这个函数完成了bar的映射，这次映射的size是NVME_REG_DBS + 一个queue的大小，这个queue就是admin queue.
 	
 	* 再读取NVME_REG_VS寄存器，完成设置dev的subsystem值和写NVME_REG_CSTS寄存器；调用`nvme_disable_ctrl`关闭nvme设备，这样后面才能开始配置admin queue；
 
