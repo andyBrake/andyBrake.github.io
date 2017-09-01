@@ -2,13 +2,6 @@
 # [nvme协议讲解](http://mp.weixin.qq.com/s?__biz=MzIwNTUxNDgwNg==&mid=2247484399&idx=1&sn=9a7612489ba72d94e17304c7476d271f&chksm=972ef2b6a0597ba07c4dd45996602b9d891cc195478e3643b6bd32ff57c0b3f1c2f7ee98b69c&scene=21#wechat_redirect)
 
 ***
-# nvme 协议学习笔记：
-- nvme协议规定了nvme的命令格式，command占用64Byte，前4个Byte为command Dword0，为通用格式。命令分为Admin Command 10个，IO Command 3个（read，write，flush）；Admin/IO command大小为64B，对应的Completion大小为16B。
-- NVMe 规范定义的 class code 是 0x010802
-- nvme 设备只使用PCIE HEADER（共64Byte）中的BAR0，BAR1两个寄存器，合并为一个64bit的寄存器使用。该寄存器内的base address中用64-14个bit描述nvme设备的寄存器基地址（即地址一定是一个64K对齐的位置）。这些寄存器在协议的3.1节定义。
-- nvme协议规定使用queue进行命令交互，分为admin queue和IO queue两种，每种queue都分为submission 和completion两种queue。其中admin queue全系统只能有一个；IO queue一般是一个core一个（最多可以有64K个），如果一个core分配多个IO submission queue（但是只对应一个completion queue）则一般用于qos任务分级处理；Admin SQ/CQ的队列深度是2~4K；而IO SQ/CQ的队列深度是2~64K
-
-***
 
 # nvme kernel driver阅读笔记:
 - nvme/host/core.c init中创建了workqueue `nvme_wq`和nvme class `nvme_class`，以及使用`__register_chrdev`注册了一个字符设备（会动态分配主设备号），这个字符设备没有write和read的ops，只有open,close和ioctrl，用于处理nvme设备的命令admin，io，reset，scan。这个字符设备的创建则是在probe流程中，调用device_create_with_groups创建。总得来说，这个core模块加载只占了系统的设备号资源以及完成一些内存结构的创建，而并没有去真正配置nvme设备，占中断等资源。
