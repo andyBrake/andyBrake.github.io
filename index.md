@@ -1,8 +1,8 @@
-# [nvme](./doc/nvme.md)
+# [nvme协议学习笔记](./doc/nvme_express.md)
 
+# [linux nvme driver源码学习笔记](./doc/nvme.md)
 ***
-http://ifeve.com/wp-content/uploads/2013/05/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8BV1.0.pdf
-***
+
 
 # LLD3收获：
 - [memory barrier](http://www.wowotech.net/kernel_synchronization/memory-barrier.html)  其作用是保证barrier前后的代码执行先后顺序，因为有些硬件设备内部有缓存机制，在多核运行场景下编译器优化后可能导致指令的执行顺序乱序，从而出现极难定位的问题。通过barrier可以防止这种情况发生，但是会对性能有影响。使用时需要选择合适的barrier函数，比如只考虑读，只考虑写或者都需要考虑。
