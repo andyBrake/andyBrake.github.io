@@ -11,8 +11,9 @@
 - bus_type表示linux内核中的总线抽象模型，device类型表示内核设备模型抽象，具体的设备类型又是这个结构的子类，比如pci_dev,usb_device;设备驱动的抽象结构是device_driver,具体的驱动类型需要封转这个抽象结构;class是对底层具体硬件的再次抽象，基于功能的抽象，比如scsi磁盘，ata磁盘都抽象为一个class，但是他们具体怎么做class不关心，class在/sys/class中显示；属于某种class的设备描述结构为class_device，其关联上class和device;
 - 设备都被会对应到ram虚拟文件系统sysfs中，其具体作用和设计可以参考[这里](https://www.ibm.com/developerworks/cn/linux/l-cn-sysfs/index.html)
 - request, request_queue, bio:
-  1. request_queue 非常复杂，除了记录未完成的request之外，还包含很多配置信息，比如对齐值，最大值，sector size等。
-  2. request 表示的是一个在磁盘上连续的请求，io schduler内部会合并request，但不会合并读写请求，也不会合并任何违法限制的请求（比如超过最大size）。
-  3. bio 是virtual memory subsystem or system call发起的一组block请求，相当于是kernel和block层交互的数据结构。block层会决定这个请求是合并给现有的request还是新建一个request。`the bio structure contains everything that a block driver needs to carry out the request without reference to the user-space process that caused that request to be initiated`.
-  4. bio内的核心结构是struct bio_vec，其作用和组织形式类似SGL；bio是单链表构造；
+  1. request_queue 非常复杂，除了记录未完成的request之外，还包含很多配置信息，比如对齐值，最大值，sector size等
+  2. request 表示的是一个在磁盘上连续的请求，io schduler内部会合并request，但不会合并读写请求，也不会合并任何违法限制的请求（比如超过最大size）
+  3. bio 是virtual memory subsystem or system call发起的一组block请求，相当于是kernel和block层交互的数据结构。block层会决定这个请求是合并给现有的request还是新建一个request。`the bio structure contains everything that a block driver needs to carry out the request without reference to the user-space process that caused that request to be initiated`.
+  4. bio内的核心结构是struct bio_vec，其作用和组织形式类似SGL；bio是单链表构造；
+  
 - 对于无需排队优化的块设备，不需要使用queue，而需要提供一个make_request_fn接口；其可以提供直接数据传送功能，或者重定向请求功能。bio请求完成时，也不能调用queue相关的接口，而使用bio_endio接口。
