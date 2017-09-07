@@ -75,4 +75,6 @@
 - controller层面是不会对读写命令保序的，需要host或者业务层面自己保证。
 - Identify Controller data structure中会表明各种情况下的原子写粒度，单位是block.
 - Flush command会使得所有命令在他之前完成，相当于对command刷盘
-- directive具体是撒特性，还没整清楚
+- directive具体是撒特性，还没整清楚。从google的结果上看，是一种将数据聚合写入（stream流形式）的方法，这样数据的写入和擦除可以尽量在整block上操作，降低gc的消耗。`With directives (multi-streaming) in NVMe, streams allow data written together on media so they can be erased together which minimizes garbage collection resulting in reduced write amplification as well as efficient flash utilization.` - from [thislink](http://blog.seagate.com/intelligent/a-review-of-nvme-optional-features-for-cloud-ssd-customization/)
+
+
