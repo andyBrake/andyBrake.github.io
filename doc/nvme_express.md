@@ -77,4 +77,25 @@
 - Flush command会使得所有命令在他之前完成，相当于对command刷盘
 - directive具体是撒特性，还没整清楚。从google的结果上看，是一种将数据聚合写入（stream流形式）的方法，这样数据的写入和擦除可以尽量在整block上操作，降低gc的消耗。`With directives (multi-streaming) in NVMe, streams allow data written together on media so they can be erased together which minimizes garbage collection resulting in reduced write amplification as well as efficient flash utilization.` - from [thislink](http://blog.seagate.com/intelligent/a-review-of-nvme-optional-features-for-cloud-ssd-customization/)
 
+# SR-IOV
+## SR-IOV 中的两种新功能类型是：
+1. 物理功能 (Physical Function, PF)
+用于支持 SR-IOV 功能的 PCI 功能，如 SR-IOV 规范中定义。PF 包含 SR-IOV 功能结构，用于管理 SR-IOV 功能。PF 是全功能的 PCIe 功能，可以像其他任何 PCIe 设备一样进行发现、管理和处理。PF 拥有完全配置资源，可以用于配置或控制 PCIe 设备。
 
+2. 虚拟功能 (Virtual Function, VF)
+与物理功能关联的一种功能。VF 是一种轻量级 PCIe 功能，可以与物理功能以及与同一物理功能关联的其他 VF 共享一个或多个物理资源。VF 仅允许拥有用于其自身行为的配置资源。
+
+每个 SR-IOV 设备都可有一个物理功能 (Physical Function, PF)，并且每个 PF 最多可有 64,000 个与其关联的虚拟功能 (Virtual Function, VF)。PF 可以通过寄存器创建 VF，这些寄存器设计有专用于此目的的属性。
+
+一旦在 PF 中启用了 SR-IOV，就可以通过 PF 的总线、设备和功能编号（路由 ID）访问各个 VF 的 PCI 配置空间。每个 VF 都具有一个 PCI 内存空间，用于映射其寄存器集。VF 设备驱动程序对寄存器集进行操作以启用其功能，并且显示为实际存在的 PCI 设备。创建 VF 后，可以直接将其指定给 IO 来宾域或各个应用程序（如裸机平台上的 Oracle Solaris Zones）。此功能使得虚拟功能可以共享物理设备，并在没有 CPU 和虚拟机管理程序软件开销的情况下执行 I/O。
+
+## SR-IOV 的优点
+SR-IOV 标准允许在 IO 来宾域之间高效共享 PCIe 设备。SR-IOV 设备可以具有数百个与某个物理功能 (Physical Function, PF) 关联的虚拟功能 (Virtual Function, VF)。VF 的创建可由 PF 通过设计用来开启 SR-IOV 功能的寄存器以动态方式进行控制。缺省情况下，SR-IOV 功能处于禁用状态，PF 充当传统 PCIe 设备。
+
+具有 SR-IOV 功能的设备可以利用以下优点：
+- 性能－从虚拟机环境直接访问硬件。
+- 成本降低－节省的资本和运营开销包括：
+- 节能
+- 减少了适配器数量
+- 简化了布线
+- 减少了交换机端口
