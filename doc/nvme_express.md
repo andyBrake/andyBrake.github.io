@@ -24,6 +24,18 @@
 - command 的仲裁机制有Round Robin Arbitration，Weighted Round Robin with Urgent Priority Class Arbitration，Vendor Specific Arbitration 三种。
 ***
 
+# Admin command（8个必选）
+- admin command 的执行和IO queue的状态是无关的，比如io queue时满的，一样可以执行delete io queue的admin command
+- Asynchronous Event Requests 这个command类似controller提供的观察者模式，需要关注什么类型事件就发送对应的type command，当发生时controller就发送completion到CQ中。event的清理需要使用Get Log command。CQE的Dword0中包含了若干event的信息。
+- ID 0是admin CQ的id，那推测admin SQ的ID就应该为1哦，协议里面好像没说清楚SQ和CQ的ID是否是统一编制的。
+- 一定要先删SQ再删CQ，否则删除CQ的时候会返回错误的。
+- log信息在reset和上下电后是可能清理的，不同的log类型处理不一样，log有多种，通过log id区别。
+－ smart log可以用于做性能统计，参见page 98.
+－ get log命令通过DPTR指定一个buffer返回log数据，当CQE返回时表示buffer填好了。
+－ identify command很重要的一个命令，在配置nvme的时候就会用到。返回的是4k数据描述nvme系统的一些参数。
+
+***
+
 # nvme命令执行流程 （page 201）
 1. host提交命令到SQ
 2. host写doorbell
@@ -64,7 +76,7 @@
 3. host删除所有的IO CQ
 4. host设置CC.SHN域为01b，当controller更新CSTS.SHST为10b时标志shutdown流程完成了
 
-# Asynchronous Event Requests 这个功能还没整明白
+***
 
 # keep alive命令利用watchdog的timer提供了一种心跳机制，确保host和controller之间能及时感知故障。NVME over PCIe不需要keep alive机制。。。。
 
