@@ -6,7 +6,7 @@
 - IVMS 寄存器读的时候返回的是nvme设备中断掩码，而不是寄存器的值。
 - CC寄存器是配置寄存器，主机程序必须设置若干字段才能正常使用nvme设备，包括：CC.AMS, CC.MPS, CC.CSS, CC.EN, CC.IOCQES, CC.IOSQES，设置这些字段的值可能需要参考CAP中返回的值，否者可能会导致未定义行为。
 - 如果controller完成过shutdown（CC.SHST变成了10b），则再次下发命令前需要reset一次(清零CC.EN字段)；CC.RDY字段变为1之后，才表示controller可以开始SQ doorbell写。
-- SQT,CQH只用了16个bit用于表示指针，是不是位数不够哦？理论上应该有64bit才够啊！----看了内核代码后（__nvme_submit_cmd）搞清楚了，文档中的pointer不应该理解为指针，而是queue下标，从0开始计数。16bit正好可以对应IO queue的最大深度64k。每次提交这个值1就行了；Admin 的SQ，CQ队列深度是2至4K。
+- SQT,CQH只用了16个bit用于表示指针，是不是位数不够哦？理论上应该有64bit才够啊！----看了内核代码后（__nvme_submit_cmd）搞清楚了，文档中的pointer不应该理解为指针，而是queue下标，从0开始计数。16bit正好可以对应IO queue的最大深度64k。每次提交这个值+1就行了；Admin 的SQ，CQ队列深度是2至4K。
 - controller用current head entry pointer指向的是下一个即将被处理的entry。当一个entry处理完成后，再增加游标。
 - 主机软件一定要保证先创建CQ成功，再创建关联SQ。删除时需要先删除SQ，再删除CQ。
 - 主机写非法值给两种doorbell都会触发异步事件。(p49)
@@ -22,9 +22,10 @@
 - CMBSZ 寄存器可以用来设置controller内置内存的用途，即CMB的用途，可以用于queue内存也可以用于PRP,SGL内存。
 - command的选择和执行是不保序的：The controller may select candidate commands for processing in any order. The order in which commands are selected for processing does not imply the order in which commands are completed.
 - command 的仲裁机制有Round Robin Arbitration，Weighted Round Robin with Urgent Priority Class Arbitration，Vendor Specific Arbitration 三种。
+
 ***
 
-# Admin command（8个必选）
+# Admin command（10个必选）
 - admin command 的执行和IO queue的状态是无关的，比如io queue时满的，一样可以执行delete io queue的admin command
 - Asynchronous Event Requests 这个command类似controller提供的观察者模式，需要关注什么类型事件就发送对应的type command，当发生时controller就发送completion到CQ中。event的清理需要使用Get Log command。CQE的Dword0中包含了若干event的信息。
 - ID 0是admin CQ的id，那推测admin SQ的ID就应该为1哦，协议里面好像没说清楚SQ和CQ的ID是否是统一编制的。
@@ -57,6 +58,8 @@
 4. host 更新CQ的游标，写对应doorbell。清理中断。
 5. 如果command执行失败，这里做recover操作。
 
+***
+
 # nvme设备的初始化流程
 1. 设置PCI 寄存器，bar0，bar1中的那一堆
 2. host等待设备之前的可能reset操作，等待CSTS.RDY 变0
@@ -70,6 +73,8 @@
 10. host准备好IO SQ的内存资源，使用create I/O submission queue的命令创建SQ
 11. 异步事件通知机制的配置
 
+***
+
 # normal shutdown流程
 1. 确保host不再下发任何 IO COMMAND，并且允许任何正在处理中的command完成
 2. host删除所有的IO SQ，成功的删除会将所有等待执行的command abort掉
@@ -78,7 +83,10 @@
 
 ***
 
-# keep alive命令利用watchdog的timer提供了一种心跳机制，确保host和controller之间能及时感知故障。NVME over PCIe不需要keep alive机制。。。。
+# keep alive命令
+- 利用watchdog的timer提供了一种心跳机制，确保host和controller之间能及时感知故障。NVME over PCIe不需要keep alive机制。。。。
+
+***
 
 # 读写命令
 - identify命令会上报namespace所支持的logic block size，一般是512byte。block是读写命令所能操作的最小单元。
@@ -88,6 +96,8 @@
 - Identify Controller data structure中会表明各种情况下的原子写粒度，单位是block.
 - Flush command会使得所有命令在他之前完成，相当于对command刷盘
 - directive具体是撒特性，还没整清楚。从google的结果上看，是一种将数据聚合写入（stream流形式）的方法，这样数据的写入和擦除可以尽量在整block上操作，降低gc的消耗。`With directives (multi-streaming) in NVMe, streams allow data written together on media so they can be erased together which minimizes garbage collection resulting in reduced write amplification as well as efficient flash utilization.` - from [thislink](http://blog.seagate.com/intelligent/a-review-of-nvme-optional-features-for-cloud-ssd-customization/)
+
+***
 
 # SR-IOV
 ## SR-IOV 中的两种新功能类型是：
