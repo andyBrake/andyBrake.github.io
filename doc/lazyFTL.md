@@ -42,13 +42,25 @@ LazyFTL 学习笔记
 ***
 
 ## Algorithm 2 GC B ： DBA | MBA -> erased 
-  1. GC cost定义 ：（read_latch + write_latch） * valid_page_number_IN_block + erase_latch 表示一个block的GC消耗。
-  2. line 1-5 : 如果B是一个mapping block,则将B中的所有有效page move 到MBA区域。这里的move操作可能隐含的有read, modify, write这几步操作；move完成后，erase B即完成了GC操作。
-  3. line 6-22 : 如果B不是一个mapping block（是data block）则操作复杂多了：对B中所有的valid page执行如下操作：
-   > 首先判断LPN是否在UMT有映射项，如果有则将对应的invalid flag标记位清零，然后就完了直接到4。注意此时的情况是B在DBA中，而在UMT中有映射项，说明这个B一定被overwrite了，这个B中的这个valid page是老数据（经过convert从UBA中转到DBA中的，然后相同lba又被写入新数据），新数据存在UBA中呢，所以UMT中有映射项。所以这种情况的处理比较简单，直接干掉这个page就行了，如果整个B中的page都满足这个条件则整个B可以直接erase，因为它上面没有存任何真正有效的数据了。invalid flag需要无条件清零也很清楚，因为这个page所在的B将会被erase。
-   > 如果LPN在UMT中没有映射项，则说明B的这一个page没有被overwrite过。首先，找到CCB；然后move这个page到CCB中，注意这里的move操作和前面考虑的一样；再然后，把这个page的映射关系加入到UMT中，因为现在这个logic page的物理位置是在CBA中了；最后，将这个page对应的update flag置1，invalid flag清零。update flag需要置1是因为这里把映射项插入了UMT，那么GMT一定是需要进行同步更新的，所以这里要标记好；invalid flag清零很明显，因为这个logic page在GMT中指向的physical page所在的block B马上就要被erase了。
-  4. line 23-24 : erase B，将B放入空闲block pool
+ 1. GC cost定义 ：（read_latch + write_latch） * valid_page_number_IN_block + erase_latch 表示一个block的GC消耗。<br>
+ 2. line 1-5 : 如果B是一个mapping block,则将B中的所有有效page move 到MBA区域。这里的move操作可能隐含的有read, modify, write这几步操作；move完成后，erase B即完成了GC操作。<br>
+ 3. line 6-22 : 如果B不是一个mapping block（是data block）则操作复杂多了：对B中所有的valid page执行如下操作：
+> 首先判断LPN是否在UMT有映射项，如果有则将对应的invalid flag标记位清零，然后就完了直接到4。注意此时的情况是B在DBA中，而在UMT中有映射项，说明这个B一定被overwrite了，这个B中的这个valid page是老数据（经过convert从UBA中转到DBA中的，然后相同lba又被写入新数据），新数据存在UBA中呢，所以UMT中有映射项。所以这种情况的处理比较简单，直接干掉这个page就行了，如果整个B中的page都满足这个条件则整个B可以直接erase，因为它上面没有存任何真正有效的数据了。invalid flag需要无条件清零也很清楚，因为这个page所在的B将会被erase。<br>
+> <br>
+> 如果LPN在UMT中没有映射项，则说明B的这一个page没有被overwrite过。首先，找到CCB；然后move这个page到CCB中，注意这里的move操作和前面考虑的一样；再然后，把这个page的映射关系加入到UMT中，因为现在这个logic page的物理位置是在CBA中了；最后，将这个page对应的update flag置1，invalid flag清零。update flag需要置1是因为这里把映射项插入了UMT，那么GMT一定是需要进行同步更新的，所以这里要标记好；invalid flag清零很明显，因为这个logic page在GMT中指向的physical page所在的block B马上就要被erase了。<br>
+
+4. line 23-24 : erase B，将B放入空闲block pool
 
 ***
 
 ## Algorithm 3 Write page P 
+ 1. line 1-6 : 找到一个合适的CUB
+ 2. line 7 : 写数据到CUB中的page中。这里的write应该有两种情况，简单的是满page写，那么直接写入CUB中即可；复杂的是非满page写，则应该需要read老数据，合并，再write到CUB中。
+ 3. line 8 ：无条件将写入page对应的update flag置1.这里使用这个page的LPN即可索引到bit位以及映射项。
+ 4. line 9-17 ：修改invalid flag标志位。
+> 如果P在UMT中没有映射项，则说明这个page所在的block已经convert过了，本次写入会导致DBA中的page无用，所以需要将invalid flag置1.后面在合适的时机会修改GMT的映射项。一般来说，是在下次convert的时候会去做。
+> 如果P在UMT中有映射项，说明上次写入后还没发生convert就又来相同page内的写请求了。那么首先是找到原来logic page P所对应的physcical page P\`, 后面line10-14没看懂，这个P\` 的处理逻辑是撒？？？？
+
+ 5. line 18 : 将最新的映射关系插入UMT中。
+ 
+ 
