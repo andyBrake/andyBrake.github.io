@@ -59,9 +59,19 @@ LazyFTL 学习笔记
  2. line 7 : 写数据到CUB中的page中。这里的write应该有两种情况，简单的是满page写，那么直接写入CUB中即可；复杂的是非满page写，则应该需要read老数据，合并，再write到CUB中。
  3. line 8 ：无条件将写入page对应的update flag置1.这里使用这个page的LPN即可索引到bit位以及映射项。
  4. line 9-17 ：修改invalid flag标志位。
-> 如果P在UMT中没有映射项，则说明这个page所在的block已经convert过了，本次写入会导致DBA中的page无用，所以需要将invalid flag置1.后面在合适的时机会修改GMT的映射项。一般来说，是在下次convert的时候会去做。
-> 如果P在UMT中有映射项，说明上次写入后还没发生convert就又来相同page内的写请求了。那么首先是找到原来logic page P所对应的physcical page P\`, 后面line10-14没看懂，这个P\` 的处理逻辑是撒？？？？
+> 如果P在UMT中没有映射项，则说明这个page所在的block已经convert过了（或者是上电后初次写，可以等同视为convert过），本次写入会导致DBA中的page无用，所以需要将invalid flag置1.后面在合适的时机会修改GMT的映射项。一般来说，是在下次convert的时候会去做。
+> 如果P在UMT中有映射项，说明上次写入后还没发生convert就又来相同page内的写请求了。那么首先是找到原来logic page P所对应的physcical page P\`, 后面line10-14没看懂，这个P\` 的处理逻辑是撒？？？？   __我觉得line 9-14的处理逻辑应该只需要做如下几步：找到原有的physical page，将这个page置无效，完了。__
 
  5. line 18 : 将最新的映射关系插入UMT中。
  
+ ***
  
+ # 下电后的重建
+ 1. 下电后，所有UBA和CBA中的block都会变成DBA，因为UMT只在sram中，下电后没了。这些变换的block是没有映射项meta管理的，怎么恢复后面讲。
+ 2. 上电后，先扫描整个flash找出mapping page，根据mapping page就可以在sram中重建GMD了。
+ 3. 每一个block的第一个page内有一块额外的空间（spare area），这个空间可以用于一个计数器。当这个block被分配成为一个UBA或CBA时，计数器加1.有一个参数叫age threshold，当一个UBA或CBA的计数器大于age threshold时，强制将这个block转换成为DBA。__这个步骤完全没看懂__
+ 
+ # Questions
+ 1. UMT应该只存在sram中，为什么在寻址的时候还会考虑mapping page size，它根本没存在flash page上啊
+ 2. write 算法中的P\`是什么，他的invalid flag难道会和page P的不一致吗
+ 3. state状态转换图中UPDATE操作表示什么意思？
