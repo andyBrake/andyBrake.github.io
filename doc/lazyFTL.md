@@ -27,17 +27,18 @@ LazyFTL 学习笔记
 ***
 
 # paper中伪代码解析
-## Algorithm 1 Convert block B ： CBA|UBA －> DBA 
-  1. line 1-2:初始化mapping_pages, update_entries 两个集合为空.<br>
-  2. line 3- 11: 对于B中的每一个有效page P，先将P所在的映射项E从UMT中移除，然后若P对应的update flag为1，则将E所在的mapping page P\`加入到集合mapping pages中，将E加入集合updata_entries中。<br>
-  3. line 12-17: 对于UMT全集中的所有映射项进行处理，如果E所在的mapping page在集合mapping pages中，且E对应的update flag为1，则将update flag清零，并将该E加入到集合update_entries中。<br>
-  4. line 18: 对update_entries集合进行排序去重处理，mapping_pages这个集合此时已经不再需要了<br>
-  5. line 19-32:对于集合update_entries中的每一个entry进行如下处理：根据映射项page的逻辑号LPN对mapping page容量取模得到映射项entry在mapping page中的offset。如果entry对应的invalid flag为1，则该mapping page中的offset对应的entry项置无效，再清0对应invalid flag。然后，该映射项的指向为PPN（这一步感觉是不是不需要啊，映射项本来就是LPN:PPN）。这里invalidate P\`\`\[offset\] 这一句伪代码还有一种理解是修改的GMT中映射项，但是这里P\`\`很明显确定是一个mapping page页面，所以这个解释讲不通。```P′′[offset] ← PPNe′′``` 这一步操作感觉确实没必要，因为下一段代码直接将整个P干掉了。再看了一下invalid flag的定义，__感觉这里这种写法就是在修改GMT__，不然整个流程确实没有修改GMT的地方了，如果是这种解释，那么invalidate P\`\`\[offset\] 这句又是多余的了，因为后面又去设置了PPN给这个映射项赋值。？？？？<br>
-  6. line 27-31:最后，对于entry所在的mapping page如果没有再更新的情况了，则将这个mapping page写入MBA，更新对应GMD，将这个mapping page标记为无效，即在UMT中不会在用它了。<br>
-  7. 整个convert流程中，没有设置两个bitmap为1的步骤，只有清零的步骤。UMT的mapping page只存在于cache中，所以对其的invalid操作应该很简单。<br>
-  8. convert cost指一个block中valid page所使用的映射项所占用的不同mapping page个数。比如一个block中的valid page占了64个映射项，这64个映射项分布在2个mapping page中存储，则该block的convert cost为2.<br>
-  9. 一次convert操作，会将victim block在UMT的所有映射项全部干掉，而在GMT和MBA中写入这些映射关系。victim block的物理位置没有改变，也没有被写入或者erase任何东西，只是由于管理他的映射项都变了，所以这个victim从逻辑上由UBA的一个block变为了DBA中的一个block。受到波及的UBA中其他block可能部分或者全部的映射项也被更新进GMT，所以一次convert操作，可能实际最后convert了多个UBA中的block。<br>
-  10. UMT中的映射项entry只可能在convert的时候被移除，跟这个entry撒时候update没关系。（page 5中原文）<br>
+## Algorithm 1 Convert block B ： CBA|UBA －> DBA
+
+ 1. line 1-2:初始化mapping_pages, update_entries 两个集合为空.<br>
+ 2. line 3- 11: 对于B中的每一个有效page P，先将P所在的映射项E从UMT中移除，然后若P对应的update flag为1，则将E所在的mapping page P\`加入到集合mapping pages中，将E加入集合updata_entries中。<br>
+ 3. line 12-17: 对于UMT全集中的所有映射项进行处理，如果E所在的mapping page在集合mapping pages中，且E对应的update flag为1，则将update flag清零，并将该E加入到集合update_entries中。<br>
+ 4. line 18: 对update_entries集合进行排序去重处理，mapping_pages这个集合此时已经不再需要了<br>
+ 5. line 19-32:对于集合update_entries中的每一个entry进行如下处理：根据映射项page的逻辑号LPN对mapping page容量取模得到映射项entry在mapping page中的offset。如果entry对应的invalid flag为1，则该mapping page中的offset对应的entry项置无效，再清0对应invalid flag。然后，该映射项的指向为PPN（这一步感觉是不是不需要啊，映射项本来就是LPN:PPN）。这里invalidate P\`\`\[offset\] 这一句伪代码还有一种理解是修改的GMT中映射项，但是这里P\`\`很明显确定是一个mapping page页面，所以这个解释讲不通。```P′′[offset] ← PPNe′′``` 这一步操作感觉确实没必要，因为下一段代码直接将整个P干掉了。再看了一下invalid flag的定义，__感觉这里这种写法就是在修改GMT__，不然整个流程确实没有修改GMT的地方了，如果是这种解释，那么invalidate P\`\`\[offset\] 这句又是多余的了，因为后面又去设置了PPN给这个映射项赋值。？？？？<br>
+ 6. line 27-31:最后，对于entry所在的mapping page如果没有再更新的情况了，则将这个mapping page写入MBA，更新对应GMD，将这个mapping page标记为无效，即在UMT中不会在用它了。<br>
+ 7. 整个convert流程中，没有设置两个bitmap为1的步骤，只有清零的步骤。UMT的mapping page只存在于cache中，所以对其的invalid操作应该很简单。<br>
+ 8. convert cost指一个block中valid page所使用的映射项所占用的不同mapping page个数。比如一个block中的valid page占了64个映射项，这64个映射项分布在2个mapping page中存储，则该block的convert cost为2.<br>
+ 9. 一次convert操作，会将victim block在UMT的所有映射项全部干掉，而在GMT和MBA中写入这些映射关系。victim block的物理位置没有改变，也没有被写入或者erase任何东西，只是由于管理他的映射项都变了，所以这个victim从逻辑上由UBA的一个block变为了DBA中的一个block。受到波及的UBA中其他block可能部分或者全部的映射项也被更新进GMT，所以一次convert操作，可能实际最后convert了多个UBA中的block。只有convert会导致UBA和CBA的block数量减少，所以在后面的GC和Write算法中，当发现UBA和CBA不足时，就会先触发一次CONVERT。<br>
+ 10. UMT中的映射项entry只可能在convert的时候被移除，跟这个entry撒时候update没关系。（page 5中原文）<br>
 
 ***
 
