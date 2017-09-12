@@ -13,6 +13,23 @@ LazyFTL 学习笔记
 |Mag-Disk  |12.7ms     |13.7ms    | NA          |
 |NAND-Flash|80us(2kb)  |200us(2kb)| 1.5ms(128kb)|
 
+***
+
+# 结构示意图
+```
+===================================================================
+       |                |            |
+       |                |            |
+sram   |  GMT&GMD       |      UMT   |  update bitmap&invalid bitmap
+       |                |            |
+-----------------------------------------------------------------------------------------------------------------
+       |     |          |            |
+       | MBA | DBA      |    CBA&UBA |  
+ flash |     |          |            |
+       |     |          |            |
+       |     |          |            |
+====================================================================
+```
 
 # 设计
 1. 整个flash分为DBA，MBA，CBA，UBA 四大块；MBA不会保存数据，只存映射项相当于元数据（叫GMT），且有部分会放在SRAM做的cache中加快查询速度。
@@ -69,9 +86,13 @@ LazyFTL 学习笔记
  # 下电后的重建
  1. 下电后，所有UBA和CBA中的block都会变成DBA，因为UMT只在sram中，下电后没了。这些变换的block是没有映射项meta管理的，怎么恢复后面讲。
  2. 上电后，先扫描整个flash找出mapping page，根据mapping page就可以在sram中重建GMD了。
- 3. 每一个block的第一个page内有一块额外的空间（spare area），这个空间可以用于一个计数器。当这个block被分配成为一个UBA或CBA时，计数器加1.有一个参数叫age threshold，当一个UBA或CBA的计数器大于age threshold时，强制将这个block转换成为DBA。__这个步骤完全没看懂__
+ 3. 每一个block的第一个page内有一块额外的空间（spare area），这个空间可以用于一个计数器。当这个block被分配成为一个UBA或CBA时，计数器加1.这个计数器足够大，保证在整个flash的生命周期内，计数不会溢出（比如block的PE次数是64K，counter有16bit就够了）。每一个block被分为UBA或CBA时，它的counter就记录下了当前系统中分配UBA或CBA的次数。这个值越大，说明这个block越`年轻`，老到一定程度的block就需要强制convert。有一个参数叫age threshold，当一个UBA或CBA的计数器大于age threshold时，强制将这个block转换成为DBA。__paper里面要求age threshold大于CBA UBA的配额，这里有点没整明白。若满足这样的配置，怎么可能触发强制转换呢，配额肯定先不足触发convert啊。__ 在上电恢复的时候，只需要把最`年轻`的age threshold个block找出来就可以确定就是这些block为CBA和UBA了。
+ 4. 找到CBA和UBA的这些block后，对他们进行convert操作，注意这些block可能是已经convert过了，所以这里需要convert操作支持重入。
+ 5. 前面几步完成后，GMT UMT等信息都有，根据这些信息，对应恢复出两个bitmap flag即可。上电恢复完成。理论上此时，UMT应该变成空的了，所有数据全部转到DBA中。
  
  # Questions
- 1. UMT应该只存在sram中，为什么在寻址的时候还会考虑mapping page size，它根本没存在flash page上啊
- 2. write 算法中的P\`是什么，他的invalid flag难道会和page P的不一致吗
+ 1. UMT应该只存在sram中，为什么在寻址的时候还会考虑mapping page size，它根本没存在flash page上啊,是因为这些映射项会写入MBA吗，所以要求整page写。
+ 2. write 算法中的P\`是什么，他的invalid flag难道会和page P的不一致吗，我理解flag的索引都是LPN啊
  3. state状态转换图中UPDATE操作表示什么意思？
+ 4. page 11中对age threshold的作用没有理解清楚，假设UBA&CBA的最大个数是128，age threshold为256，那么怎么可能有256个block待convert呢?第129个CBA或者UBA就会占完配额，触发convert。所以系统在任意时刻最多只有128个block需要convert，那么上电恢复后，只需要去最youngest的128个block去convert即可啊？
+ 4. page 11中提到的同一个LPN映射指向两个不同物理页面的情况（新写数据还没来得及删除老的映射项和老的page），是如何使用2bit解决的
