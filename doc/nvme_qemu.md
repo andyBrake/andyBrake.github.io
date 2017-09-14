@@ -25,6 +25,6 @@
  * 设置异步事件的queue队列和timer，给异步事件的command使用。
  * 还设置了另外一个timer，给`sq_processing_timer`使用的，分析了一下代码的流程，推测这个timer的作用是模拟doorbell的机制，本来nvme设备是host写SQ后，触发doorbell，设备取出SQE执行。这个模拟器应该是定时去检查是否有SQE，有就取出一批执行。timer的执行函数为`sq_processing_timer_cb`。
   
-  6. google了一下qemu的设计，qemu会模拟一个guest os的时钟中断，类似于上文提高的timer模拟中断。在`sq_processing_timer_cb`中会检查所有SQ是否有SQE存在，如果有，则开始取出执行，取的逻辑是没有实现nvme协议规定的多种仲裁机制的，而是直接从id 0（admin SQ）的SQ开始取，如果这个SQ非空，则继续在这个SQ取出执行，直到这个SQ空了再去处理一下SQ。每一次中断中，最多处理ENTRIES_TO_PROCESS个SQE，超过则退出中断，等待下一次中断再处理；如果把所有SQ都处理完了，那么就会把定时器del掉，使用`qemu_del_timer`，看了一下这个函数内部并不会释放这个timer，只是暂时deactive一下这个timer。 
-  7. 在另外的流程中`nvme_mmio_write`提供给host用作写nvme 寄存器和SQ用。这套接口在发现写的地址是SQ时会调用到`process_doorbell`去处理，这个函数是会被写SQ和写CQ两套流程复用的，host只会写SQ，函数内部实现的最后会去判断当前的timer是否被deactive了，如果是那么会重启启动这个timer的。这样6中描述的流程就会被继续拉起。
-  8. 函数`process_doorbell`还有处理CQ的流程，里面会判断条件后产生async event，模拟了nvme设备的async event机制。里面还有个额外的处理分支，即CQ满时，将timer的触发时间延后了5us，为什么要这样处理，暂时没想通。
+ 6. google了一下qemu的设计，qemu会模拟一个guest os的时钟中断，类似于上文提高的timer模拟中断。在`sq_processing_timer_cb`中会检查所有SQ是否有SQE存在，如果有，则开始取出执行，取的逻辑是没有实现nvme协议规定的多种仲裁机制的，而是直接从id 0（admin SQ）的SQ开始取，如果这个SQ非空，则继续在这个SQ取出执行，直到这个SQ空了再去处理一下SQ。每一次中断中，最多处理ENTRIES_TO_PROCESS个SQE，超过则退出中断，等待下一次中断再处理；如果把所有SQ都处理完了，那么就会把定时器del掉，使用`qemu_del_timer`，看了一下这个函数内部并不会释放这个timer，只是暂时deactive一下这个timer。 
+ 7. 在另外的流程中`nvme_mmio_write`提供给host用作写nvme 寄存器和SQ用。这套接口在发现写的地址是SQ时会调用到`process_doorbell`去处理，这个函数是会被写SQ和写CQ两套流程复用的，host只会写SQ，函数内部实现的最后会去判断当前的timer是否被deactive了，如果是那么会重启启动这个timer的。这样6中描述的流程就会被继续拉起。
+ 8. 函数`process_doorbell`还有处理CQ的流程，里面会判断条件后产生async event，模拟了nvme设备的async event机制。里面还有个额外的处理分支，即CQ满时，将timer的触发时间延后了5us，为什么要这样处理，暂时没想通。
