@@ -4,6 +4,7 @@
 
   1. `PCIDeviceInfo` 描述 PCI设备，内部包含结构`DeviceInfo`，可以理解为继承了这个结构，`DeviceInfo`为设备模型的基类。
   2. `NVMEState` 这个结构描述nvme设备的模型，包含了内部寄存器，SQ&CQ, namespace， feature等等信息。其内部包含（继承）了`PCIDevice`,而`PCIDevice`又继承自`DeviceState`,
+  3. `DiskInfo`结构模拟nvme存储设备内的flash mem，使用的file来存数据，包含了两个file，一个存数据，一个存元数据。另外，还提供了maping机制，是的对file的操作可以转化成直接对mem的操作，提高性能。结构中的`host_write_commands`和`host_read_commands`是用来保存读写写计数的，注意看一下具体实现，它是用两个u64来模拟128位的counter的，比较有启发。
 
 # 入口
   1. 从./hw/nvme.c开始，这个文件是nvme设备注册的入口，注册函数为`nvme_register_devices`,主要的信息在结构`nvme_info`中。这个函数注册的作用主要是将nvme设备挂入到PCI总线上去，通过单链表的形式。 注册的时候，函数内部会初始化完成一些父类对象的初始化，即把`DeviceInfo`初始化一下。
