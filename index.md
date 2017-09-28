@@ -1,5 +1,8 @@
 <mark>_Talk is cheat, show me the code._</mark>
 
+# 书签
+[tcpip的流程讲解](https://www.cubrid.org/blog/understanding-tcp-ip-network-stack)
+
 # 学习笔记
 
 [nvme协议学习笔记](./doc/nvme_express.md)
@@ -7,6 +10,8 @@
 [LDD3学习笔记](./doc/ldd.md)
 
 [ARM资料学习](./doc/arm.md)
+
+[go语言学习](./doc/golang_learning.md)
 
 ***
 
