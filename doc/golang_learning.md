@@ -12,3 +12,4 @@
 
  * [闭包函数](https://tour.golang.org/moretypes/25)
  * method才支持入参的指针和值自动转换，普通func不支持。
+ * channel只有sender端可以close，receive端只能通过`v, ok := <-ch`判断channel是否关闭了。for 语句也支持检测关闭，发现关闭会自动退出for循环
