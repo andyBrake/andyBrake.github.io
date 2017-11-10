@@ -30,4 +30,6 @@
 
 [POSTGRE项目中内存管理单元源码阅读记录](../doc/postgre.md)
 
+[Why kernel code should use READ_ONCE and WRITE_ONCE for shared memory accesses](https://github.com/google/ktsan/wiki/READ_ONCE-and-WRITE_ONCE)
+
 ***
