@@ -13,6 +13,8 @@
 
 [go语言学习](./doc/golang_learning.md)
 
+[C语言volatile总结](./doc/volatile.md)
+
 ***
 
 # Paper 阅读纪录
