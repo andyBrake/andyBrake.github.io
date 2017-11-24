@@ -1,4 +1,4 @@
-<mark>_Talk is cheat, show me the code._</mark>
+<mark>Talk is cheat, show me the code.</mark>
 
 # 书签
 [tcpip的流程讲解](https://www.cubrid.org/blog/understanding-tcp-ip-network-stack)
@@ -33,5 +33,10 @@
 [POSTGRE项目中内存管理单元源码阅读记录](../doc/postgre.md)
 
 [Why kernel code should use READ_ONCE and WRITE_ONCE for shared memory accesses](https://github.com/google/ktsan/wiki/READ_ONCE-and-WRITE_ONCE)
+
+***
+
+# makefile 
+[makefile技巧](./doc/makefile.md)
 
 ***
