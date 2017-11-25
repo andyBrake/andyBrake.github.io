@@ -24,4 +24,4 @@ $ git config　user.name nickname#将用户名设为nickname   huangfa
 $ git config　user.email nickname@gmail.com #将用户邮箱设为cavalier_man@163.com
 ```
 
-3. [gen ssh key](https://git-scm.com/book/zh/v2/%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8A%E7%9A%84-Git-%E7%94%9F%E6%88%90-SSH-%E5%85%AC%E9%92%A5)
+3. 使用命令 `ssh-keygen` 产生ssh的公钥和私钥，输出会提示公钥文件位置，打开公钥文件 `id_rsa.pub` 将里面的全部内容复制出来，拷贝到github的配置页面的新增ssh key里面即可。
