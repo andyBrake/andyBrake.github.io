@@ -30,5 +30,20 @@ $ git config　user.email nickname@gmail.com #将用户邮箱设为cavalier_man@
 	http://blog.csdn.net/leichelle/article/details/27236443
 	http://blog.csdn.net/elloop/article/details/54898512
 
+5. git的配置文件
+```
+[merge]
+	tool = bc4
+[mergetool "bc4"]
+	cmd = "\"c:/Users/huangfa/Documents/Beyond Compare 4/BComp.exe\" \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\""
+	trustexitcode = true
+[user]
+	name = huangfa
+	email = cavalier_man@163.com
+[diff]
+	tool = bc4
+[mergetool]
+	prompt = false
 
+```
 
