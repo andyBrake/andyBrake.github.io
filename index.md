@@ -16,6 +16,12 @@
 [C语言volatile总结](./doc/volatile.md)
 
 ***
+# 经典算法代码
+[qsort](../src/qsort.c)
+[堆排序](../src/sink.c)
+[二分查找](../src/binsearch.c)
+
+***
 
 # Paper 阅读纪录
 [lazyFTL论文学习](../doc/lazyFTL.md)
