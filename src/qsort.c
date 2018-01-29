@@ -18,15 +18,15 @@ void quicksort(int *a, int left,int right)
 		while(a[i]<=temp && i<j) 
 			i++;
 
-		//交换两个数在数组中的位置 
-		if(i<j) 
+		//交换两个数在数组中的位置  exchange(i, j)
+		if(i<j)
 		{ 
 			t=a[i]; 
 			a[i]=a[j]; 
 			a[j]=t; 
 		} 
 	}
-	//最终将基准数归位 
+	//最终将基准数归位 exchange(left, i)
 	a[left]=a[i]; 
 	a[i]=temp; 
 
