@@ -2,6 +2,7 @@
 
 # 书签
 [tcpip的流程讲解](https://www.cubrid.org/blog/understanding-tcp-ip-network-stack)
+[tcmalloc详解](https://zhuanlan.zhihu.com/p/29216091)
 
 # 学习笔记
 
