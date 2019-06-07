@@ -1,4 +1,5 @@
 /*
+http://www.ruanyifeng.com/blog/2013/05/boyer-moore_string_search_algorithm.html
 BM
 BM算法的预处理时间是O(m+ASIZE)
 匹配时间最差是O(mn),引用论文的例子 (e.g. pattern = "CABABA," and string = "XXXXAABABAXXXXAABABA
