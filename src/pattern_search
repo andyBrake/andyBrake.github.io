@@ -22,3 +22,108 @@ KMP的预处理时间是O(m)
 
 
 */
+
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+
+//这里我们只使用ASCII的128个字符，中文处理不了
+#define ASIZE 128
+void preBmBc(char *x, int m, int bmBc[]) {
+   int i;
+ 
+   for (i = 0; i < ASIZE; ++i)
+      bmBc[i] = m;
+   for (i = 0; i < m - 1; ++i)
+      bmBc[x[i]] = m - i - 1;
+}
+
+void suffixes(char *x, int m, int *suff) {
+   int f, g, i;
+ 
+   suff[m - 1] = m;
+   g = m - 1;
+   for (i = m - 2; i >= 0; --i) {
+   	//如果某一后缀段包含在其中一个大后缀段，那么大后缀段子集 与与之对应的前面匹配的后缀的子集必然是相等的
+      if (i > g && suff[i + m - 1 - f] < i - g)
+         suff[i] = suff[i + m - 1 - f];
+      else {
+         if (i < g)
+            g = i;
+         f = i;
+         while (g >= 0 && x[g] == x[g + m - 1 - f])
+            --g;
+         suff[i] = f - g;
+      }
+   }
+}
+ 
+void preBmGs(char *x, int m, int bmGs[]) {
+   int i, j, suff[m];
+ 
+   suffixes(x, m, suff);
+ 	//case1:不存在好后缀，直接移动模式串长度，与j所处位置无关
+   for (i = 0; i < m; ++i)
+      bmGs[i] = m;
+   j = 0;
+   //case2:存在好后缀，且好后缀是前缀，中间段任何j都移动，m - 1 - i，可以看出是与j无关的
+   for (i = m - 1; i >= 0; --i)
+      if (suff[i] == i + 1) //长度比i多1，说明是前缀
+         for (; j < m - 1 - i; ++j)
+            if (bmGs[j] == m) //多个前缀可能重复
+               bmGs[j] = m - 1 - i;
+    //case3:存在好后缀，且不是前缀，m - 1 - j，可以看出与j所处的位置有关
+    //这里的移动距离会覆盖上面的两种，因为这个是移动最小的，并且不会重复
+   for (j = 0; j <= m - 2; ++j)
+      bmGs[m - 1 - suff[j]] = m - 1 - j;
+}
+
+void OUTPUT(int pos){
+	cout<<pos<<endl;
+}
+
+//x模式串，m模式串长度，y目标串，n目标串长度
+void BM(char *x,int m, char *y,int n){
+	if(m>n){
+		return OUTPUT(-1);
+	}
+	int i;//模式串位置
+	int j=0; //目标串位置
+	int total = 0; //找到了几个
+	int bmGs[m];//坏字符集
+	int bmBc[ASIZE];//好后缀
+	/**预处理**/
+	preBmGs(x,m,bmGs);
+	preBmBc(x,m,bmBc);
+
+	while(j<=n-m){
+		for(i=m-1;i>=0&& x[i]== y[i+j];i--);
+		if(i<0) //找到了一个结果
+		{
+			total++;
+			OUTPUT(j);
+			j+=bmGs[0]; //跨国匹配的字符接着匹配
+		} else {
+			//移动最多的
+			j+=max(bmGs[i],bmBc[y[i+j]]+i-m+1);
+		}
+	}
+	printf("共找到%d\n个", total);
+}
+
+
+/×
+假定字符串为"HERE IS A SIMPLE EXAMPLE"，搜索词为"EXAMPLE"
+×/
+int main(){
+	string targetStr = "BMBBMB";
+	string patternStr = "BMB";
+	int m = patternStr.length();
+	int n = targetStr.length();
+	char *x = (char *)patternStr.c_str();
+	char *y = (char *)targetStr.c_str();
+	BM(x,m,y,n);
+	return 0;
+};
