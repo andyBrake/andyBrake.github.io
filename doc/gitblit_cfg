@@ -1,0 +1,15 @@
+
+
+#gitblit 配置文件修改
+修改在data文件夹下面的 defaults.properties 文件：
+1. git.repositoriesFolder = ${baseFolder}/git   #这是git仓库的存储目录，默认在data下的git文件夹下面
+2. server.httpPort = 10101                      #这是http服务的端口号
+3. server.httpBindInterface = 10.25.131.47      #这是服务器的ip地址
+4. server.httpsBindInterface = localhost        #这是https服务的ip地址，可以填localhost，也可以填http一样的ip地址
+
+
+#linux下面的启动：
+sudo java -jar gitblit.jar --baseFolder data
+
+#windows下面的启动：
+执行 gitblit.cmd 脚本
