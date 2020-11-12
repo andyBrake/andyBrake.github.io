@@ -1,0 +1,6 @@
+To connect the DS when exception:
+```
+interrupt
+directory "C:\XXX\Project_Root_Dir"
+file "C:\XXX\Project_Root_Dir\YYY\aaaa.axf"
+```
