@@ -164,6 +164,6 @@ https://blog.csdn.net/weiwei_xiaoyu/article/details/20563479
 - 
 
 #Tips
-cpsr_c代表bai的是这32位中的低8位，du也就是控制位
+cpsr_c代表的是这32位中的低8位，也就是控制位
  
 
