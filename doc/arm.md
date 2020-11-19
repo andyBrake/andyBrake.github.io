@@ -163,5 +163,7 @@ https://blog.csdn.net/weiwei_xiaoyu/article/details/20563479
 - :DEF:X  如果符号X已经定义了，则返回真，否则返回假
 - 
 
+#Tips
+cpsr_c代表bai的是这32位中的低8位，du也就是控制位
  
 
