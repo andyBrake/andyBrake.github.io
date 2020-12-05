@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "__functional_base": "c",
+        "map": "c",
+        "functional": "c",
+        "memory": "c",
+        "*.tcc": "c",
+        "algorithm": "c",
+        "limits": "c"
+    }
+}
