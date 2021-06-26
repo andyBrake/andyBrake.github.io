@@ -96,8 +96,9 @@ int main()
 	printf("ret is %d\n", ret);
 
 	printf("\nTest end\n");
-	//system("pause");
-
+#ifdef _WIN32	
+	system("pause");
+#endif
 	return 0;
 }
 

@@ -13,9 +13,9 @@
 
 #include "d_stub.h"
 
-#define JUMPCODE_MAX 0x05 //0x05
-#define JUMPCODE_CMD 0xE9
-#define JUMPCODE_RET 0xC3
+#define JUMPCODE_MAX 0x05 /* The jump code buffer need 5 Byte, the first Byte is ASM command 0xE9, then the following 4 Byte is the address of the jump destination */
+#define JUMPCODE_CMD 0xE9 /* This is the ASIC value of ASM command JMP */
+#define JUMPCODE_RET 0xC3 /* This is the ASIC value of ASM command RET */
 
 #define DBG (0)
 
@@ -61,7 +61,8 @@ static void setJumpCode(void *codeAddr, char jumpCode[JUMPCODE_MAX])
     ret = mprotect(pageAddr, pageNum * pageSize, PROT_READ | PROT_WRITE | PROT_EXEC);
     if (ret != 0)
     {
-        printf("mprotect ret %d, failed\n", ret);
+        printf("Warning: mprotect ret %d, failed\n", ret);
+		exit(-1);
     }
 
     memcpy(codeAddr, jumpCode, JUMPCODE_MAX);
@@ -93,6 +94,14 @@ void setStub(void *funcAddr, void *stubAddr, stubInfo *si)
 
     (void)checkJumpCode(funcAddr);
 
+	/*
+		How to inject dynamic stub ?
+		Using the JMP command, let the original function Jump to our stub function. 
+		There are 5 Byte replaced with our `jumpCode` buffer.
+		The first Byte is the JMP command ASIC value, then the following 4 Bytes is the offset of the stub fucntion relative to the original fucntion.
+		Because the JMP command and the offset itself occupy 5 Bytes, we must minus the 5 bytes when calculate the offset.
+	*/
+
     jumpCode[0] = JUMPCODE_CMD;
     memcpy((void *)&jumpCode[1], (void *)&dist, sizeof(void *));
     memcpy((void *)&si->info[0], (void *)funcAddr, JUMPCODE_MAX);
@@ -100,8 +109,6 @@ void setStub(void *funcAddr, void *stubAddr, stubInfo *si)
 #if DBG
     printf("start to set jump code\n");
 #endif
-
-    //memcpy(&jumpCode[1], (void *)&dist, sizeof(void *));
 
     setJumpCode(funcAddr, jumpCode);
 }
