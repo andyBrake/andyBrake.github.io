@@ -1,12 +1,14 @@
-// test_stub.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌÐòµÄÈë¿Úµã¡£
+// test_stub.cpp : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¨Ó¦ï¿½Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµã¡£
 //
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 #include "stub002/d_stub.h"
-#include "stub003/single_stub.h"
-
+//#include "stub003/single_stub.h"
 
 void a(void)
 {
@@ -20,12 +22,12 @@ void b(void)
 
 int a_plus(int a, int b)
 {
-	return a+b;
+	return a + b;
 }
 
 int b_plus(int a, int b)
 {
-	return a-b;
+	return a - b;
 }
 
 /* test single stub */
@@ -65,40 +67,39 @@ int main()
 #endif
 /* end test single stub */
 
-
 int main()
 {
-	int n1 = 5, n2 = 10, ret;
+	int n1 = 5, n2 = 10, ret = 0;
 	stubInfo si, si_plus;
 
 	a();
 	ret = a_plus(n1, n2);
-	printf("ret is %d\n", ret );
-	
+	printf("original plus function %d + %d = %d\n", n1, n2, ret);
+
+	printf("\nStart to set the dynamic stub function!!!\n");
+
 	setStub(a, b, &si);
 	setStub(a_plus, b_plus, &si_plus);
-	printf("\n");
-	
+
 	a();
 	ret = a_plus(n1, n2);
-	ret = a_plus(n1, n2);
-	printf("ret is %d\n", ret );
+	printf("stub plus function %d + %d = %d\n", n1, n2, ret);
 
+	printf("\nStart to clear all the dynamic stub function\n");
 	cleanStub(&si);
 	cleanStub(&si_plus);
-	printf("\n");
+
+	printf("\nAfter restore all function, call them again:\n");
 
 	a();
 	ret = a_plus(n1, n2);
-	printf("ret is %d\n", ret );
+	printf("ret is %d\n", ret);
 
-	printf("\ntest end\n");
-	system("pause");
+	printf("\nTest end\n");
+	//system("pause");
 
 	return 0;
 }
-
-
 
 #if 0
 int main()
