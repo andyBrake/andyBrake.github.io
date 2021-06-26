@@ -82,7 +82,7 @@ static void setJumpCode(void *codeAddr, char jumpCode[JUMPCODE_MAX])
  *****************************************************/
 void setStub(void *funcAddr, void *stubAddr, stubInfo *si)
 {
-    char jumpCode[14] = {JUMPCODE_CMD};                                                    //JUMPCODE_MAX
+    char jumpCode[JUMPCODE_MAX];                                                           //JUMPCODE_MAX
     unsigned long dist = (unsigned long)stubAddr - (unsigned long)funcAddr - JUMPCODE_MAX; // get the offset
 
     assert(NULL != funcAddr);
@@ -93,15 +93,15 @@ void setStub(void *funcAddr, void *stubAddr, stubInfo *si)
 
     (void)checkJumpCode(funcAddr);
 
+    jumpCode[0] = JUMPCODE_CMD;
     memcpy((void *)&jumpCode[1], (void *)&dist, sizeof(void *));
     memcpy((void *)&si->info[0], (void *)funcAddr, JUMPCODE_MAX);
     memcpy((void *)&si->info[JUMPCODE_MAX], (void *)&funcAddr, sizeof(void *));
 #if DBG
     printf("start to set jump code\n");
 #endif
-    jumpCode[0] = JUMPCODE_CMD;
 
-    memcpy(&jumpCode[6], (void *)&dist, sizeof(void *));
+    //memcpy(&jumpCode[1], (void *)&dist, sizeof(void *));
 
     setJumpCode(funcAddr, jumpCode);
 }
