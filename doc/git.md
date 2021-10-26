@@ -40,6 +40,15 @@ $ git config　user.email nickname@gmail.com #将用户邮箱设为cavalier_man@
 [user]
 	name = huangfa
 	email = cavalier_man@163.com
+[alias]
+        lg = log -10 --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+        br = branch
+        st = status -uno
+        ct = checkout
+        sp = submodule update
+        pa = "!git pull --rebase origin development; git submodule update"
+[color]
+        ui = true
 [diff]
 	tool = bc4
 [mergetool]
