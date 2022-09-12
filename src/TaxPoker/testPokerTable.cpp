@@ -8,6 +8,9 @@ using namespace std;
 
 int main()
 {
+    PokerTable table(8);
 
+    table.startGame();
+    
     return 0;
 }

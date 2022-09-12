@@ -1,13 +1,18 @@
+#ifndef TYPE_H
+#define TYPE_H
 
+#include <iostream>
+
+using namespace std;
 
 enum Color
 {
-    Spade = 0, // 黑桃
-    Hearts,    // 红桃 
-    Club,      // 梅花
-    Diamond,   // 方片
+    Spade   = 0,    // 黑桃    \u2664
+    Hearts  = 1,    // 红桃    \u2661
+    Club    = 2,    // 梅花    \u2663 
+    Diamond = 3,    // 方片    \u2662 
 
-    ColorNum
+    ColorNum = 4
 };
 
 enum eCardValue
@@ -73,23 +78,37 @@ struct Card
 
 ostream &operator<<(ostream &os, const Card &ob)
 {
-    os << "  Card : color " << ob.color << ", value " << ob.value<< " ";
+    static string s[] = {"\u2664", "\u2661", "\u2663", "\u2662"};
+    static string v[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+
+    os << "  Card : color " << ob.color << ", value " << ob.value<<". "\
+        <<s[(int)ob.color]<<v[int(ob.value) - 2];
 
     return os;
 }
+
+enum
+{
+    ePublicCardNum  = 5,
+    ePrivateCardNum = 2,
+
+    eFlopCardNum    = 3,
+    eTurnCardNum    = 1,
+    eRiverCardNum   = 1
+};
 
 enum eLevel
 {
     Unkown = 0,
     HighCardLevel = 1,
-    OnePairsLevel,
-    TwoPairsLevel,
-    SetLevel,
-    StraightLevel,
-    FlushLevel,
-    WholeHouseLevel, // 3 + 2
-    FourKindLevel, // Four of a Kind
-    StraightFlushLevel, // same color, sort 
+    OnePairsLevel = 2,
+    TwoPairsLevel = 3,
+    SetLevel      = 4,
+    StraightLevel = 5,
+    FlushLevel    = 6,
+    WholeHouseLevel = 7, // 3 + 2
+    FourKindLevel   = 8, // Four of a Kind
+    StraightFlushLevel = 9, // same color, sort 
 };
 
 
@@ -97,10 +116,124 @@ enum GameStatus
 {
     GS_Init = 0,
 
-    GS_preFlop,
-    GS_postFlop,
+    GS_preFlop = 1,
+    GS_postFlop = 2,
 
-    GS_Turn,
-    GS_River,
+    GS_Turn = 3,
+    GS_River = 4,
     GS_Final
+};
+
+#if 0
+// Prefix increment operator.
+GameStatus& operator++()       
+{
+    
 }
+
+// Postfix increment operator.
+GameStatus  operator++(int)
+{
+
+}
+#endif
+   // Declare prefix and postfix decrement operators.
+   //Point& operator--();       // Prefix decrement operator.
+   //Point operator--(int);     // Postfix decrement operator.
+
+void operator++(GameStatus &con)
+{
+	int i = (int)con;
+	con = GameStatus(++i);
+}
+
+
+class Server2ClientMsg
+{
+    public:
+    int playerId;
+    int bonusPool;
+    int curBet;
+    int behindPlayerCount;
+    bool isBlind;
+
+    Server2ClientMsg()
+    {}
+
+    ~Server2ClientMsg()
+    {}
+
+    Server2ClientMsg(const Server2ClientMsg& msg)
+    {
+        this->playerId = msg.playerId;
+        this->bonusPool = msg.bonusPool;
+        this->curBet = msg.curBet;
+        this->behindPlayerCount = msg.behindPlayerCount;
+        this->isBlind = msg.isBlind;
+    }
+
+    bool operator==(const Server2ClientMsg& msg)
+    {
+        if (this->playerId == msg.playerId
+            && this->bonusPool == msg.bonusPool
+            && this->curBet == msg.curBet
+            && this->behindPlayerCount == msg.behindPlayerCount
+            && this->isBlind == msg.isBlind)
+        {
+            return true;
+        }
+
+        return false;
+    }
+};
+
+ostream &operator<<(ostream &os, const Server2ClientMsg &ob)
+{
+    os << "  Server2ClientMsg " << endl;
+
+    return os;
+}
+
+class Client2ServerMsg
+{
+    public:
+    int PlayerId;
+    bool isFold;
+    bool isAllIn;
+    int  bet;
+
+    Client2ServerMsg()
+    {}
+
+    ~Client2ServerMsg()
+    {}
+
+    Client2ServerMsg(const Client2ServerMsg& msg)
+    {
+        this->PlayerId = msg.PlayerId;
+        this->isFold = msg.isFold;
+        this->isAllIn = msg.isAllIn;
+        this->bet = msg.bet;
+    }
+
+    bool operator==(const Client2ServerMsg& msg)
+    {
+        if(this->PlayerId == msg.PlayerId
+            && this->isFold == msg.isFold
+            && this->isAllIn == msg.isAllIn
+            && this->bet == msg.bet)
+        {
+            return true;
+        }
+        return false;
+    }
+};
+
+ostream &operator<<(ostream &os, const Client2ServerMsg &ob)
+{
+    os << "  Client2ServerMsg " << endl;
+
+    return os;
+}
+
+#endif

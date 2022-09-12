@@ -52,8 +52,6 @@ class Dealer
         splited = 0;
 
         initTotalCard();
-        display();
-
 
         pRemainCardQueue->reset();
         pUselessCardQueue->reset();
@@ -64,7 +62,7 @@ class Dealer
         {
             int index = rand()%cCardTotalNum;
 
-            cout<<"Rand index : "<<index<<endl;
+            //cout<<"Rand index : "<<index<<endl;
 
             if(usedFlag[index] == 1) //already used
             {
@@ -75,7 +73,7 @@ class Dealer
 
                 selectIndex = index;
 
-                cout<<"\tPostpone the Rand index to "<<index<<endl;
+                //cout<<"\tPostpone the Rand index to "<<index<<endl;
             }
             else
             {
@@ -85,12 +83,12 @@ class Dealer
             usedFlag[selectIndex] = 1;
             count++;
 
-            cout<<"Select "<<selectIndex<<" info "<< initCard[selectIndex] <<" , wash into Card Heap, now have "<<count<<" Cards."<<endl;
+            //cout<<"Select "<<selectIndex<<" info "<< initCard[selectIndex] <<" , wash into Card Heap, now have "<<count<<" Cards."<<endl;
 
             pRemainCardQueue->enqueue(initCard[selectIndex]);
         }
 
-        cout<<"Wash Card Finish!"<<endl;
+        cout<<"Wash Card Finish! Total Card Num "<<count<<endl;
         return;
     }
 
@@ -135,7 +133,7 @@ class Dealer
             count++;
         }
 
-        cout<<"Delever "<<count<<" Card out."<<endl;
+        //cout<<"Delever "<<count<<" Card out."<<endl;
         return;
     }
 

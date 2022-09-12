@@ -16,20 +16,21 @@
 2. 确定是否可以开始一局新游戏时
 3. 游戏开始，确定Host位置，Small Blind 位置
 4. 通知SB Player下Blind Bet，等待下注完成
-5. 启动Bet Loop ： 从SB + 1 位置开始，到SB位置结束
-6. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步
-7. 通知Dealer开始发牌：发翻牌，更新公共牌 Public Card 
-8. 启动Bet Loop ： 从SB位置开始，到Host位置结束
-9. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步 （重复第 6 步）
-10. 通知Dealer开始发牌：发转牌，更新公共牌 Public Card
-11. 启动Bet Loop ： 从SB位置开始，到Host位置结束（重复第 8 步）
-12. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步（重复第 6 步）
-13. 通知Dealer开始发牌：发河牌，更新公共牌 Public Card
-14. 启动Bet Loop ： 从SB位置开始，到Host位置结束（重复第 8 步）
-15. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步（重复第 6 步）
-16. Dealer通知Ruler依次计算每个Player的牌力，并得到牌力最大的N个Player
-17. 根据牌力信息分Bouns Pool
-18. 结束本局游戏，确定是否继续。是则跳到Step 3，否则结束进程。
+5. 给每个Player发两种手牌
+6. 启动Bet Loop ： 从SB + 1 位置开始，到SB位置结束
+7. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步
+8. 通知Dealer开始发牌：发翻牌，更新公共牌 Public Card 
+9. 启动Bet Loop ： 从SB位置开始，到Host位置结束
+10. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步 （重复第 6 步）
+11. 通知Dealer开始发牌：发转牌，更新公共牌 Public Card
+12. 启动Bet Loop ： 从SB位置开始，到Host位置结束（重复第 8 步）
+13. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步（重复第 6 步）
+14. 通知Dealer开始发牌：发河牌，更新公共牌 Public Card
+15. 启动Bet Loop ： 从SB位置开始，到Host位置结束（重复第 8 步）
+16. 判断本局是否结束，即是否只剩一个Player，是则分Bouns Pool，否则继续下一步（重复第 6 步）
+17. Dealer通知Ruler依次计算每个Player的牌力，并得到牌力最大的N个Player
+18. 根据牌力信息分Bouns Pool
+19. 结束本局游戏，确定是否继续。是则跳到Step 3，否则结束进程。
 
 
 # Dealer的主流程
