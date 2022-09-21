@@ -9,16 +9,16 @@
 #include "types.h"
 #include "Player.h"
 #include "Dealer.h"
+#include "Ruler.h"
 #include "SimpleChannel.h"
 
 using namespace std;
 
 static const string strOfStatus[] = {"Init", "Pre Flop", "Post Flop", "Turn", "River", "Final"};
 
-
 class PokerTable
 {
-    public:
+public:
     static const int cMaxPlayerCount = 8;
     static const int cBlindBet = 5;
 
@@ -28,9 +28,9 @@ class PokerTable
 
         this->playerCount = playerCount;
 
-        gameCount = 0; 
+        gameCount = 0;
         roundCount = 0;
-        
+
         hostPos = -1;
         sbPos = -1;
 
@@ -39,7 +39,7 @@ class PokerTable
 
         this->status = GS_Init;
 
-        for (int i=0; i<cMaxPlayerCount;i++)
+        for (int i = 0; i < cMaxPlayerCount; i++)
         {
             allPlayer[i].init(i);
         }
@@ -48,7 +48,8 @@ class PokerTable
     }
 
     ~PokerTable()
-    {}
+    {
+    }
 
     /* start a match, return if generate winner */
     void startGame()
@@ -59,8 +60,8 @@ class PokerTable
         int bet = cBlindBet;
 
         /* set Host Pos */
-        this->hostPos = (1 + hostPos)%this->playerCount;
-        this->sbPos = (hostPos + 1)%this->playerCount;
+        this->hostPos = (1 + hostPos) % this->playerCount;
+        this->sbPos = (hostPos + 1) % this->playerCount;
         this->currentLoopBet = cBlindBet;
         this->bounsPool = 0;
         this->dealedCardCount = 0;
@@ -68,8 +69,8 @@ class PokerTable
 
         dealer.washCard();
 
-        cout<<"The Host pos is "<<hostPos<<", the Blind pos is "<<sbPos<<endl;
-        
+        cout << "The Host pos is " << hostPos << ", the Blind pos is " << sbPos << endl;
+
         /* Set Blind bet */
         ret = acquirePlayerBlind(allPlayer[sbPos], currentLoopBet);
 
@@ -77,7 +78,7 @@ class PokerTable
 
         bounsPool += currentLoopBet;
 
-        cout<<"The Blind Bet is "<<currentLoopBet<<" , the bonus pool is "<<bounsPool<<endl;
+        cout << "The Blind Bet is " << currentLoopBet << " , the bonus pool is " << bounsPool << endl;
 
         dealPrivateCards(sbPos);
 
@@ -85,8 +86,9 @@ class PokerTable
         this->status = GS_preFlop;
         betLoop(sbPos);
 
-        cout<<"Pre Flop finish, alive "<<this->stayPlayerCount<<" Player\n"<<endl;
-        cout<<"The bonus pool is "<<bounsPool<<endl;
+        cout << "Pre Flop finish, alive " << this->stayPlayerCount << " Player\n"
+             << endl;
+        cout << "The bonus pool is " << bounsPool << endl;
 
         assert(this->stayPlayerCount > 0);
         if (this->stayPlayerCount == 1)
@@ -98,78 +100,109 @@ class PokerTable
         /* start to Post Flop */
         for (this->status = GS_postFlop; this->status < GS_Final; ++(this->status))
         {
-            cout<<endl;
-            cout<<"===Start to process "<<strOfStatus[(int)this->status]<<", "<<this->status<<" ...."<<endl;
-            cout<<"\tStill have "<<this->stayPlayerCount<<" Player alive"<<endl;
+            cout << endl;
+            cout << "===Start to process " << strOfStatus[(int)this->status] << ", " << this->status << " ...." << endl;
+            cout << "\tStill have " << this->stayPlayerCount << " Player alive" << endl;
 
             isFinish = loopProcess();
             if (isFinish)
             {
-                cout<<"Already has Winner!!!"<<endl;
+                cout << "Already has Winner!!!" << endl;
                 return;
             }
         }
 
         /* start to check winner */
-        cout<<"The status "<<strOfStatus[(int)this->status]<<", v "<<this->status<<endl;
-        cout<<"Must check private cards to determine Winenr \n";
+        cout << "The status " << strOfStatus[(int)this->status] << ", v " << this->status << endl;
+        cout << "Must check private cards to determine Winenr \n";
 
         displayPublicCard();
         displayPlayerCard();
 
-        //TODO :
+        for (int i = 0; i < playerCount; i++)
+        {
+            Card cardSet[7];
+            CardPower cardPower;
+            int power = 0;
+
+            for (int index = 0; index < (int)ePublicCardNum; index++)
+            {
+                cardSet[index] = this->publicCards[index];
+            }
+
+            this->allPlayer[i].getCard(cardSet[ePublicCardNum], cardSet[ePublicCardNum + 1]);
+
+            sortCardSet(cardSet);
+
+            cout << "Player " << i << " After Sort\n";
+            for (int j = 0; j < 7; j++)
+            {
+                cout << cardSet[j] << endl;
+            }
+            cout << endl;
+
+            Ruler::confirmPower(cardSet, cardPower);
+
+            power = Ruler::getPower(cardPower);
+
+            cout << "Get Player " << i << " power is " << power << endl
+                 << endl
+                 << endl;
+        }
+
+        // TODO :
         return;
     }
 
     void dealPrivateCards(int startPos)
     {
         Card privateCard[ePrivateCardNum];
-  
-        dealer.splitCard(10); //TODO : only split random
+
+        dealer.splitCard(10); // TODO : only split random
         /* deal each player private 2 card */
         int pos = startPos;
         do
         {
             dealer.dealCard(ePrivateCardNum, privateCard);
             Player &curPlayer = allPlayer[pos];
-            
-            //TODO, to send the card to player x
-            cout<<"Dealer send Player "<<pos<<" Card: "<< privateCard[0] << ", " <<privateCard[1]<<endl;
-            curPlayer.getCard(privateCard[0], privateCard[1]);
+
+            // TODO, to send the card to player x
+            cout << "Dealer send Player " << pos << " Card: " << privateCard[0] << ", " << privateCard[1] << endl;
+            curPlayer.setCard(privateCard[0], privateCard[1]);
 
             /* shift to next player */
             pos = nextPlayerPos(pos);
-        }while(pos != startPos);
+        } while (pos != startPos);
 
         return;
     }
 
     void getDealCount(int &dealCardNum, int &splitCardNum)
     {
-        switch(this->status)
+        switch (this->status)
         {
-            case GS_postFlop:
-            {
-                dealCardNum = eFlopCardNum;
-                splitCardNum = 7;
-                break;
-            }
-            case GS_Turn:
-            {
-                dealCardNum = eTurnCardNum;
-                splitCardNum = 1;
-                break;
-            }
-            case GS_River:
-            {
-                dealCardNum = eRiverCardNum;
-                splitCardNum = 1;
-                break;
-            }
+        case GS_postFlop:
+        {
+            dealCardNum = eFlopCardNum;
+            splitCardNum = 7;
+            break;
+        }
+        case GS_Turn:
+        {
+            dealCardNum = eTurnCardNum;
+            splitCardNum = 1;
+            break;
+        }
+        case GS_River:
+        {
+            dealCardNum = eRiverCardNum;
+            splitCardNum = 1;
+            break;
+        }
 
-            default:
-                cout<<"Invalid Status "<<this->status<<endl;
-                assert(0);
+        default:
+            cout << "Invalid Status " << this->status << endl;
+            assert(0);
         }
         return;
     }
@@ -183,12 +216,12 @@ class PokerTable
 
         dealer.splitCard(splitCardNum);
         dealer.dealCard(dealCardNum, &this->publicCards[this->dealedCardCount]);
-        for (int i=0; i<dealCardNum; i++)
+        for (int i = 0; i < dealCardNum; i++)
         {
-            cout<<"Dealer deal public Card, index = "<<i+this->dealedCardCount<<", "\
-                <<this->publicCards[this->dealedCardCount+i]<<" ."<<endl;
+            cout << "Dealer deal public Card, index = " << i + this->dealedCardCount << ", "
+                 << this->publicCards[this->dealedCardCount + i] << " ." << endl;
         }
-        
+
         this->dealedCardCount += dealCardNum;
         betLoop(this->hostPos);
 
@@ -203,7 +236,7 @@ class PokerTable
     }
 
     // return true if the game finish
-    int betLoop(int endPos) // the endPos means this round should be end in which pos 
+    int betLoop(int endPos) // the endPos means this round should be end in which pos
     {
         int startPos = nextPlayerPos(endPos);
         int currentLoopBet = 0;
@@ -211,15 +244,15 @@ class PokerTable
         int behindPlayerCount = this->stayPlayerCount - 1;
         int ret = 0, bet = 0;
 
-        cout<<"In Bet Loop, status "<<this->status<<", start pos "<<startPos<<", end pos "<<endPos<<endl;
+        cout << "In Bet Loop, status " << this->status << ", start pos " << startPos << ", end pos " << endPos << endl;
         do
         {
             bool isFold = false;
             bool isRaise = false;
-            
+
             Player &curPlayer = allPlayer[startPos];
 
-            cout<<"\tTo sync with Player "<<curPlayer.getId()<<endl;
+            cout << "\tTo sync with Player " << curPlayer.getId() << endl;
             /* In pre flop, the blind player don't bet again in default */
             if (this->status == GS_preFlop && startPos == nextPlayerPos(this->hostPos))
             {
@@ -270,14 +303,15 @@ class PokerTable
 
         this->currentLoopBet = 0;
         this->bounsPool = currentBounsPool;
-        cout<<"The current bouns pool is "<<this->bounsPool<<endl;
+        cout << "The current bouns pool is " << this->bounsPool << endl;
 
         return 0;
     }
 
     // give bonus to winner
-    void moveBouns() 
-    {}
+    void moveBouns()
+    {
+    }
 
     int acquirePlayerBlind(Player &player, int blindBet)
     {
@@ -297,51 +331,50 @@ class PokerTable
 
     int acquirePlayerAction(Player &player, int currentLoopBet, int currentBounsPool, int behindPlayerCount)
     {
-        cout<<"Player "<<player.getId()<<" to make decision, bet "<<currentLoopBet<<endl;
+        cout << "Player " << player.getId() << " to make decision, bet " << currentLoopBet << endl;
         return 0;
     }
 
     // dead loop for waiting for player Id action
-    int waitPlayerAction(Player &player, bool &isFold, int &bet) 
+    int waitPlayerAction(Player &player, bool &isFold, int &bet)
     {
         // to update the isFold status, and the player bet number
-        cout<<"Player "<<player.getId()<<" did the action, bet "<<bet<<endl;
+        cout << "Player " << player.getId() << " did the action, bet " << bet << endl;
         isFold = false;
-        //bet = currentLoopBet;
+        // bet = currentLoopBet;
 
         return 0;
     }
 
-    private:
+private:
     Player allPlayer[cMaxPlayerCount];
     Dealer dealer;
-    Card   publicCards[ePublicCardNum];
+    Card publicCards[ePublicCardNum];
     SimpleChannel channel;
 
     int playerCount;
-    int gameCount; // how many games played
+    int gameCount;  // how many games played
     int roundCount; // how many round of game played
-    
+
     int hostPos;
     int sbPos;
     int bounsPool;
-    int currentLoopBet; // how many Bet should call in current loop, if any Player raise, should increase it
+    int currentLoopBet;  // how many Bet should call in current loop, if any Player raise, should increase it
     int stayPlayerCount; // how many Player still alive
     int dealedCardCount; // how many public card dealed
 
     GameStatus status; // the enum of game status, to indicate which state of the game, for example, before flop.
 
-
     int nextPlayerPos(int curPos)
     {
-        return (curPos + 1)%this->playerCount;
+        return (curPos + 1) % this->playerCount;
     }
 
     /* check if this loop can finish */
     bool isLoopEnd(int curPos)
     {
         /* in pre flop,the blind pos is the last one */
-        if(this->status == GS_preFlop)
+        if (this->status == GS_preFlop)
         {
             if (curPos == nextPlayerPos(this->hostPos))
             {
@@ -358,28 +391,47 @@ class PokerTable
         return false;
     }
 
+    // Sort in card value decrement order
+    void sortCardSet(Card cardSet[])
+    {
+        for (int i = 0; i < (int)eCardSetNum; i++)
+        {
+            for (int j = i; j < (int)eCardSetNum; j++)
+            {
+                if (cardSet[i].value < cardSet[j].value)
+                {
+                    eCardValue v = cardSet[i].value;
+                    Color col = cardSet[i].color;
+
+                    cardSet[i].value = cardSet[j].value;
+                    cardSet[i].color = cardSet[j].color;
+
+                    cardSet[j].value = v;
+                    cardSet[j].color = col;
+                }
+            }
+        }
+    }
+
     void displayPublicCard()
     {
-        cout<<"The public card :\n";
-        for (int i=0; i<this->dealedCardCount; i++)
+        cout << "The public card :\n";
+        for (int i = 0; i < this->dealedCardCount; i++)
         {
-            cout<<"\t";
-            cout<<publicCards[i]<<" "<<endl;
+            cout << "\t";
+            cout << publicCards[i] << " " << endl;
         }
-        cout<<endl;
+        cout << endl;
     }
     void displayPlayerCard()
     {
-        cout<<"The Player card :\n";
-        for (int i=0; i<this->playerCount; i++)
+        cout << "The Player card :\n";
+        for (int i = 0; i < this->playerCount; i++)
         {
             this->allPlayer[i].displayCard();
         }
-        cout<<endl;
+        cout << endl;
     }
 };
-
-
-
 
 #endif

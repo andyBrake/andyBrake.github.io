@@ -5,12 +5,12 @@
 
 using namespace std;
 
-enum Color
+enum Color // change to eCardColor
 {
-    Spade   = 0,    // 黑桃    \u2664
-    Hearts  = 1,    // 红桃    \u2661
-    Club    = 2,    // 梅花    \u2663 
-    Diamond = 3,    // 方片    \u2662 
+    Spade = 0,   // 黑桃    \u2664
+    Hearts = 1,  // 红桃    \u2661
+    Club = 2,    // 梅花    \u2663
+    Diamond = 3, // 方片    \u2662
 
     ColorNum = 4
 };
@@ -22,7 +22,7 @@ enum eCardValue
     CV_1 = 1,
     CV_2,
     CV_3,
-    CV_4, 
+    CV_4,
     CV_5,
     CV_6,
     CV_7,
@@ -36,7 +36,6 @@ enum eCardValue
     CV_A
 
 };
-
 
 struct Card
 {
@@ -60,6 +59,18 @@ struct Card
         this->value = card.value;
     }
 
+    Card &operator=(const Card &card)
+    {
+        if (this == &card)
+        {
+            return *this;
+        }
+        this->color = card.color;
+        this->value = card.value;
+
+        return *this;
+    }
+
     bool operator==(const Card &card)
     {
         if (this->color == card.color && this->value == card.value)
@@ -70,10 +81,10 @@ struct Card
         return false;
     }
 
-    ~Card(){}
+    ~Card() {}
 
-    Color color; // enum of Card color, total 4 color
-    eCardValue   value; // from 1 to 14. J means 11, Q means 12, K means 13， A means 14 or 1.
+    Color color;      // enum of Card color, total 4 color
+    eCardValue value; // from 1 to 14. J means 11, Q means 12, K means 13， A means 14 or 1.
 };
 
 ostream &operator<<(ostream &os, const Card &ob)
@@ -81,20 +92,22 @@ ostream &operator<<(ostream &os, const Card &ob)
     static string s[] = {"\u2664", "\u2661", "\u2663", "\u2662"};
     static string v[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
-    os << "  Card : color " << ob.color << ", value " << ob.value<<". "\
-        <<s[(int)ob.color]<<v[int(ob.value) - 2];
+    os << "  Card : color " << ob.color << ", value " << ob.value << ". "
+       << s[(int)ob.color] << v[int(ob.value) - 2];
 
     return os;
 }
 
 enum
 {
-    ePublicCardNum  = 5,
+    ePublicCardNum = 5,
     ePrivateCardNum = 2,
 
-    eFlopCardNum    = 3,
-    eTurnCardNum    = 1,
-    eRiverCardNum   = 1
+    eFlopCardNum = 3,
+    eTurnCardNum = 1,
+    eRiverCardNum = 1,
+
+    eCardSetNum = ePublicCardNum + ePrivateCardNum
 };
 
 enum eLevel
@@ -103,14 +116,13 @@ enum eLevel
     HighCardLevel = 1,
     OnePairsLevel = 2,
     TwoPairsLevel = 3,
-    SetLevel      = 4,
+    SetLevel = 4,
     StraightLevel = 5,
-    FlushLevel    = 6,
-    WholeHouseLevel = 7, // 3 + 2
-    FourKindLevel   = 8, // Four of a Kind
-    StraightFlushLevel = 9, // same color, sort 
+    FlushLevel = 6,
+    WholeHouseLevel = 7,    // 3 + 2
+    FourKindLevel = 8,      // Four of a Kind
+    StraightFlushLevel = 9, // same color, sort
 };
-
 
 enum GameStatus
 {
@@ -137,20 +149,19 @@ GameStatus  operator++(int)
 
 }
 #endif
-   // Declare prefix and postfix decrement operators.
-   //Point& operator--();       // Prefix decrement operator.
-   //Point operator--(int);     // Postfix decrement operator.
+// Declare prefix and postfix decrement operators.
+// Point& operator--();       // Prefix decrement operator.
+// Point operator--(int);     // Postfix decrement operator.
 
 void operator++(GameStatus &con)
 {
-	int i = (int)con;
-	con = GameStatus(++i);
+    int i = (int)con;
+    con = GameStatus(++i);
 }
-
 
 class Server2ClientMsg
 {
-    public:
+public:
     int playerId;
     int bonusPool;
     int curBet;
@@ -158,12 +169,14 @@ class Server2ClientMsg
     bool isBlind;
 
     Server2ClientMsg()
-    {}
+    {
+    }
 
     ~Server2ClientMsg()
-    {}
+    {
+    }
 
-    Server2ClientMsg(const Server2ClientMsg& msg)
+    Server2ClientMsg(const Server2ClientMsg &msg)
     {
         this->playerId = msg.playerId;
         this->bonusPool = msg.bonusPool;
@@ -172,13 +185,9 @@ class Server2ClientMsg
         this->isBlind = msg.isBlind;
     }
 
-    bool operator==(const Server2ClientMsg& msg)
+    bool operator==(const Server2ClientMsg &msg)
     {
-        if (this->playerId == msg.playerId
-            && this->bonusPool == msg.bonusPool
-            && this->curBet == msg.curBet
-            && this->behindPlayerCount == msg.behindPlayerCount
-            && this->isBlind == msg.isBlind)
+        if (this->playerId == msg.playerId && this->bonusPool == msg.bonusPool && this->curBet == msg.curBet && this->behindPlayerCount == msg.behindPlayerCount && this->isBlind == msg.isBlind)
         {
             return true;
         }
@@ -196,19 +205,21 @@ ostream &operator<<(ostream &os, const Server2ClientMsg &ob)
 
 class Client2ServerMsg
 {
-    public:
+public:
     int PlayerId;
     bool isFold;
     bool isAllIn;
-    int  bet;
+    int bet;
 
     Client2ServerMsg()
-    {}
+    {
+    }
 
     ~Client2ServerMsg()
-    {}
+    {
+    }
 
-    Client2ServerMsg(const Client2ServerMsg& msg)
+    Client2ServerMsg(const Client2ServerMsg &msg)
     {
         this->PlayerId = msg.PlayerId;
         this->isFold = msg.isFold;
@@ -216,12 +227,9 @@ class Client2ServerMsg
         this->bet = msg.bet;
     }
 
-    bool operator==(const Client2ServerMsg& msg)
+    bool operator==(const Client2ServerMsg &msg)
     {
-        if(this->PlayerId == msg.PlayerId
-            && this->isFold == msg.isFold
-            && this->isAllIn == msg.isAllIn
-            && this->bet == msg.bet)
+        if (this->PlayerId == msg.PlayerId && this->isFold == msg.isFold && this->isAllIn == msg.isAllIn && this->bet == msg.bet)
         {
             return true;
         }

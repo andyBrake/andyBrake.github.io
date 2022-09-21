@@ -5,21 +5,19 @@
 
 class Player
 {
-    public:
+public:
     Player()
     {
-
     }
 
     ~Player()
     {
-
     }
 
     void init(int pos)
     {
         this->id = pos;
-        cout<<"Player "<<this->id<<" Init."<<endl;
+        cout << "Player " << this->id << " Init." << endl;
         return;
     }
 
@@ -33,25 +31,34 @@ class Player
         this->isStay = false;
     }
 
-    void getCard(Card &card0, Card &card1)
+    void setCard(Card &card0, Card &card1)
     {
         this->cards[0] = card0;
         this->cards[1] = card1;
+
+        return;
+    }
+
+    void getCard(Card &card0, Card &card1)
+    {
+        card0 = this->cards[0];
+        card1 = this->cards[1];
+
         return;
     }
 
     void displayCard()
     {
-        cout<<"Player "<<this->id<<" hand-card "<<this->cards[0]<<", "<<this->cards[1]<<endl;
+        cout << "Player " << this->id << " hand-card " << this->cards[0] << ", " << this->cards[1] << endl;
     }
 
-    private:
+private:
     int channelId; // the channel ID to communicate with this player client
     Card cards[2];
 
     int id; // the sequence in table
     bool isStay;
-    int  totalBet;
+    int totalBet;
     bool isAllIn;
 };
 
