@@ -56,6 +56,7 @@ public:
     {
         int ret = 0;
         bool isFold = false;
+        bool isAllin = false;
         bool isFinish = false;
         int bet = cBlindBet;
 
@@ -74,7 +75,7 @@ public:
         /* Set Blind bet */
         ret = acquirePlayerBlind(allPlayer[sbPos], currentLoopBet);
 
-        ret = waitPlayerAction(allPlayer[sbPos], isFold, bet);
+        ret = waitPlayerPayBlind(allPlayer[sbPos], bet);
 
         bounsPool += currentLoopBet;
 
@@ -113,17 +114,26 @@ public:
         }
 
         /* start to check winner */
-        cout << "The status " << strOfStatus[(int)this->status] << ", v " << this->status << endl;
+        cout << "The status " << strOfStatus[(int)this->status] << ", " << this->status << endl;
         cout << "Must check private cards to determine Winenr \n";
 
         displayPublicCard();
         displayPlayerCard();
 
+        int allPower[8];
         for (int i = 0; i < playerCount; i++)
         {
             Card cardSet[7];
             CardPower cardPower;
             int power = 0;
+
+            if (allPlayer[i].isFold())
+            {
+                allPower[i] = 0;
+
+                cout << "  Don't check Player " << i << " due to Fold\n";
+                continue;
+            }
 
             for (int index = 0; index < (int)ePublicCardNum; index++)
             {
@@ -144,10 +154,13 @@ public:
             Ruler::confirmPower(cardSet, cardPower);
 
             power = Ruler::getPower(cardPower);
+            allPower[i] = power;
+        }
 
-            cout << "Get Player " << i << " power is " << power << endl
-                 << endl
-                 << endl;
+        cout << endl;
+        for (int i = 0; i < 8; i++)
+        {
+            cout << "Player " << i << " power is " << allPower[i] << endl;
         }
 
         // TODO :
@@ -248,13 +261,27 @@ public:
         do
         {
             bool isFold = false;
+            bool isAllin = false;
             bool isRaise = false;
 
             Player &curPlayer = allPlayer[startPos];
 
-            cout << "\tTo sync with Player " << curPlayer.getId() << endl;
+            if (curPlayer.isFold())
+            {
+                cout << "  Skip fold Player " << curPlayer.getId() << endl;
+
+                if (isLoopEnd(startPos))
+                {
+                    break;
+                }
+
+                startPos = nextPlayerPos(startPos);
+                continue;
+            }
+
+            cout << "\n\tTo sync with Player " << curPlayer.getId() << endl;
             /* In pre flop, the blind player don't bet again in default */
-            if (this->status == GS_preFlop && startPos == nextPlayerPos(this->hostPos))
+            if (this->status == GS_preFlop && curPlayer.getBlind())
             {
                 currentLoopBet = 0;
                 bet = currentLoopBet;
@@ -267,7 +294,7 @@ public:
 
             ret = acquirePlayerAction(curPlayer, currentLoopBet, currentBounsPool, behindPlayerCount);
 
-            ret = waitPlayerAction(curPlayer, isFold, bet);
+            ret = waitPlayerAction(curPlayer, isFold, isAllin, bet);
             assert(0 == ret);
             // if player fold, don't need to update bonus pool
             if (isFold)
@@ -324,24 +351,40 @@ public:
         msg.behindPlayerCount = this->playerCount;
         msg.bonusPool = this->bounsPool;
 
+        player.setBlind();
+
         ret = channel.send2Player(msg.playerId, msg);
 
         return ret;
     }
 
+    int waitPlayerPayBlind(Player &player, int &bet)
+    {
+        int blindBet = this->currentLoopBet;
+
+        bet = blindBet;
+
+        player.adjustBet(0 - blindBet);
+
+        return 0;
+    }
+
     int acquirePlayerAction(Player &player, int currentLoopBet, int currentBounsPool, int behindPlayerCount)
     {
-        cout << "Player " << player.getId() << " to make decision, bet " << currentLoopBet << endl;
+        // cout << "Player " << player.getId() << " to make decision, bet " << currentLoopBet << endl;
+
         return 0;
     }
 
     // dead loop for waiting for player Id action
-    int waitPlayerAction(Player &player, bool &isFold, int &bet)
+    int waitPlayerAction(Player &player, bool &isFold, bool &isAllin, int &bet)
     {
-        // to update the isFold status, and the player bet number
-        cout << "Player " << player.getId() << " did the action, bet " << bet << endl;
-        isFold = false;
-        // bet = currentLoopBet;
+        Robot robotPlayer(player.getId());
+
+        robotPlayer.acquireAction(this->currentLoopBet, 0, 0);
+        robotPlayer.getAction(isFold, isAllin, bet);
+
+        cout << "Player " << player.getId() << " did the action, bet " << bet << ", isFold " << isFold << endl;
 
         return 0;
     }

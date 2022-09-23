@@ -2,6 +2,7 @@
 #define TYPE_H
 
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -92,8 +93,8 @@ ostream &operator<<(ostream &os, const Card &ob)
     static string s[] = {"\u2664", "\u2661", "\u2663", "\u2662"};
     static string v[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
-    os << "  Card : color " << ob.color << ", value " << ob.value << ". "
-       << s[(int)ob.color] << v[int(ob.value) - 2];
+    os << " Color " << ob.color << ", Value " << setw(2) << ob.value << ".  "
+       << s[(int)ob.color] << setw(2) << left << v[int(ob.value) - 2];
 
     return os;
 }
