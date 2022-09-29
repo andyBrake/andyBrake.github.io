@@ -1,3 +1,6 @@
+#ifndef RULER_H
+#define RULER_H
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,6 +31,12 @@ struct CardPower
     }
     ~CardPower()
     {
+    }
+
+    void display()
+    {
+        cout<<"The Card Level is "<<level<<", then the key :"<<endl;
+        cout<<"\tKey1 : "<<key1<<", Key2 : "<<key2<<", Key3 : "<<key3<<", Key4 : "<<key4<<", Key5 : "<<key5<<endl;
     }
 };
 
@@ -62,6 +71,28 @@ public:
 
         // power = getPower(cardPower);
         return power;
+    }
+
+    // Sort in card value decrement order
+    static void sortCardSet(Card cardSet[])
+    {
+        for (int i = 0; i < (int)eCardSetNum; i++)
+        {
+            for (int j = i; j < (int)eCardSetNum; j++)
+            {
+                if (cardSet[i].value < cardSet[j].value)
+                {
+                    eCardValue v = cardSet[i].value;
+                    Color col = cardSet[i].color;
+
+                    cardSet[i].value = cardSet[j].value;
+                    cardSet[i].color = cardSet[j].color;
+
+                    cardSet[j].value = v;
+                    cardSet[j].color = col;
+                }
+            }
+        }
     }
 
     static bool checkStraightFlush(const Card cardSet[], CardPower &cardPower);
@@ -134,8 +165,8 @@ public:
             bRet = funcArray[i](cardSet, cardPower);
             if (bRet)
             {
-                cout << "Confirm Level " << levelName[i] << endl;
-                Ruler::showCardPowerInfo(cardPower);
+                //cout << "Confirm Level " << levelName[i] << endl;
+                //Ruler::showCardPowerInfo(cardPower);
 
                 return;
             }
@@ -218,7 +249,7 @@ bool Ruler::checkFourKind(const Card cardSet[], CardPower &cardPower)
                 len++;
                 if (4 == len)
                 {
-                    cout << "Confirm Four Kind " << cardSet[j].value << endl;
+                    //cout << "Confirm Four Kind " << cardSet[j].value << endl;
                     cardPower.level = FourKindLevel;
                     cardPower.key1 = (int)cardSet[j].value;
                     return true;
@@ -291,7 +322,7 @@ bool Ruler::checkWholeHouse(const Card cardSet[], CardPower &cardPower)
                     cardPower.key1 = (int)cardVal3;
                     cardPower.key2 = (int)cardSet[j].value;
 
-                    cout << "Whole House : " << cardVal3 << ", " << cardSet[j].value;
+                    //cout << "Whole House : " << cardVal3 << ", " << cardSet[j].value;
 
                     return true;
                 }
@@ -552,3 +583,5 @@ bool Ruler::confirmHighCard(const Card cardSet[], CardPower &cardPower)
 
     return true;
 }
+
+#endif

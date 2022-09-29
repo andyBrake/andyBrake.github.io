@@ -39,9 +39,10 @@ public:
 
         this->status = GS_Init;
 
+        /* Default, all player are robot */
         for (int i = 0; i < cMaxPlayerCount; i++)
         {
-            allPlayer[i].init(i);
+            allPlayer[i] =new Robot(i);
         }
 
         channel.init(cMaxPlayerCount);
@@ -72,10 +73,47 @@ public:
 
         cout << "The Host pos is " << hostPos << ", the Blind pos is " << sbPos << endl;
 
-        /* Set Blind bet */
-        ret = acquirePlayerBlind(allPlayer[sbPos], currentLoopBet);
+#if 1 // for test
+        dealer.acquireSpecialCard(Card(Spade,   CV_K));
+        dealer.acquireSpecialCard(Card(Hearts,  CV_K)); 
+        dealer.acquireSpecialCard(Card(Club,    CV_A));
+        dealer.acquireSpecialCard(Card(Diamond, CV_A));
 
-        ret = waitPlayerPayBlind(allPlayer[sbPos], bet);
+        dealer.setPrivateCardSet(Card(Spade,    CV_K),
+                                 Card(Hearts,   CV_K),
+                                 Card(Club,     CV_A),
+                                 Card(Diamond,  CV_A)
+                                );
+#if 0
+        // for test, disable some card here
+        dealer.acquireSpecialCard(Card(Spade, CV_10));
+        dealer.acquireSpecialCard(Card(Spade, CV_J)); 
+        dealer.acquireSpecialCard(Card(Spade, CV_Q));
+        dealer.acquireSpecialCard(Card(Spade, CV_K));
+        dealer.acquireSpecialCard(Card(Hearts, CV_10));
+        dealer.acquireSpecialCard(Card(Hearts, CV_J)); 
+        dealer.acquireSpecialCard(Card(Hearts, CV_Q));
+        dealer.acquireSpecialCard(Card(Hearts, CV_K));
+        dealer.acquireSpecialCard(Card(Club, CV_10));
+        dealer.acquireSpecialCard(Card(Club, CV_J)); 
+        dealer.acquireSpecialCard(Card(Club, CV_Q));
+        dealer.acquireSpecialCard(Card(Club, CV_K));
+        dealer.acquireSpecialCard(Card(Diamond, CV_10));
+        dealer.acquireSpecialCard(Card(Diamond, CV_J)); 
+        dealer.acquireSpecialCard(Card(Diamond, CV_Q));
+        dealer.acquireSpecialCard(Card(Diamond, CV_K));
+#endif
+
+        dealer.listAllCardCombine();
+
+        unsigned long testRet = dealer.getComboCount(48, 5);
+        cout<<"The combo count is "<<testRet<<endl;
+        exit(0);
+#endif
+        /* Set Blind bet */
+        ret = acquirePlayerBlind(*allPlayer[sbPos], currentLoopBet);
+
+        ret = waitPlayerPayBlind(*allPlayer[sbPos], bet);
 
         bounsPool += currentLoopBet;
 
@@ -105,7 +143,7 @@ public:
             cout << "===Start to process " << strOfStatus[(int)this->status] << ", " << this->status << " ...." << endl;
             cout << "\tStill have " << this->stayPlayerCount << " Player alive" << endl;
 
-            isFinish = loopProcess();
+            isFinish = processRound();
             if (isFinish)
             {
                 cout << "Already has Winner!!!" << endl;
@@ -127,7 +165,7 @@ public:
             CardPower cardPower;
             int power = 0;
 
-            if (allPlayer[i].isFold())
+            if (allPlayer[i]->isFold())
             {
                 allPower[i] = 0;
 
@@ -140,9 +178,9 @@ public:
                 cardSet[index] = this->publicCards[index];
             }
 
-            this->allPlayer[i].getCard(cardSet[ePublicCardNum], cardSet[ePublicCardNum + 1]);
+            this->allPlayer[i]->getCard(cardSet[ePublicCardNum], cardSet[ePublicCardNum + 1]);
 
-            sortCardSet(cardSet);
+            Ruler::sortCardSet(cardSet);
 
             cout << "Player " << i << " After Sort\n";
             for (int j = 0; j < 7; j++)
@@ -177,11 +215,11 @@ public:
         do
         {
             dealer.dealCard(ePrivateCardNum, privateCard);
-            Player &curPlayer = allPlayer[pos];
+            Player *curPlayer = allPlayer[pos];
 
             // TODO, to send the card to player x
             cout << "Dealer send Player " << pos << " Card: " << privateCard[0] << ", " << privateCard[1] << endl;
-            curPlayer.setCard(privateCard[0], privateCard[1]);
+            curPlayer->setCard(privateCard[0], privateCard[1]);
 
             /* shift to next player */
             pos = nextPlayerPos(pos);
@@ -220,7 +258,7 @@ public:
         return;
     }
 
-    bool loopProcess()
+    bool processRound()
     {
         int dealCardNum = 0;
         int splitCardNum = 0;
@@ -236,6 +274,7 @@ public:
         }
 
         this->dealedCardCount += dealCardNum;
+
         betLoop(this->hostPos);
 
         assert(this->stayPlayerCount > 0);
@@ -264,11 +303,11 @@ public:
             bool isAllin = false;
             bool isRaise = false;
 
-            Player &curPlayer = allPlayer[startPos];
+            Player *curPlayer = allPlayer[startPos];
 
-            if (curPlayer.isFold())
+            if (curPlayer->isFold())
             {
-                cout << "  Skip fold Player " << curPlayer.getId() << endl;
+                cout << "  Skip fold Player " << curPlayer->getId() << endl;
 
                 if (isLoopEnd(startPos))
                 {
@@ -279,9 +318,9 @@ public:
                 continue;
             }
 
-            cout << "\n\tTo sync with Player " << curPlayer.getId() << endl;
+            cout << "\n\tTo sync with Player " << curPlayer->getId() << endl;
             /* In pre flop, the blind player don't bet again in default */
-            if (this->status == GS_preFlop && curPlayer.getBlind())
+            if (this->status == GS_preFlop && curPlayer->getBlind())
             {
                 currentLoopBet = 0;
                 bet = currentLoopBet;
@@ -292,14 +331,14 @@ public:
                 bet = currentLoopBet;
             }
 
-            ret = acquirePlayerAction(curPlayer, currentLoopBet, currentBounsPool, behindPlayerCount);
+            ret = acquirePlayerAction(*curPlayer, currentLoopBet, currentBounsPool, behindPlayerCount);
 
-            ret = waitPlayerAction(curPlayer, isFold, isAllin, bet);
+            ret = waitPlayerAction(*curPlayer, isFold, isAllin, bet);
             assert(0 == ret);
             // if player fold, don't need to update bonus pool
             if (isFold)
             {
-                curPlayer.fold();
+                curPlayer->fold();
                 this->stayPlayerCount--;
                 behindPlayerCount--;
             }
@@ -343,6 +382,9 @@ public:
     int acquirePlayerBlind(Player &player, int blindBet)
     {
         int ret = 0;
+
+        ret = player.acquirePlayerBlind(blindBet);
+#if 0
         Server2ClientMsg msg;
 
         msg.playerId = player.getId();
@@ -350,21 +392,14 @@ public:
         msg.curBet = blindBet;
         msg.behindPlayerCount = this->playerCount;
         msg.bonusPool = this->bounsPool;
-
-        player.setBlind();
-
-        ret = channel.send2Player(msg.playerId, msg);
-
+        //ret = channel.send2Player(msg.playerId, msg);
+#endif
         return ret;
     }
 
     int waitPlayerPayBlind(Player &player, int &bet)
     {
-        int blindBet = this->currentLoopBet;
-
-        bet = blindBet;
-
-        player.adjustBet(0 - blindBet);
+        player.waitPlayerPayBlind(bet);
 
         return 0;
     }
@@ -379,10 +414,8 @@ public:
     // dead loop for waiting for player Id action
     int waitPlayerAction(Player &player, bool &isFold, bool &isAllin, int &bet)
     {
-        Robot robotPlayer(player.getId());
-
-        robotPlayer.acquireAction(this->currentLoopBet, 0, 0);
-        robotPlayer.getAction(isFold, isAllin, bet);
+        player.acquireAction(this->currentLoopBet, 0, 0);
+        player.getAction(isFold, isAllin, bet);
 
         cout << "Player " << player.getId() << " did the action, bet " << bet << ", isFold " << isFold << endl;
 
@@ -390,7 +423,7 @@ public:
     }
 
 private:
-    Player allPlayer[cMaxPlayerCount];
+    Player *allPlayer[cMaxPlayerCount];
     Dealer dealer;
     Card publicCards[ePublicCardNum];
     SimpleChannel channel;
@@ -434,28 +467,6 @@ private:
         return false;
     }
 
-    // Sort in card value decrement order
-    void sortCardSet(Card cardSet[])
-    {
-        for (int i = 0; i < (int)eCardSetNum; i++)
-        {
-            for (int j = i; j < (int)eCardSetNum; j++)
-            {
-                if (cardSet[i].value < cardSet[j].value)
-                {
-                    eCardValue v = cardSet[i].value;
-                    Color col = cardSet[i].color;
-
-                    cardSet[i].value = cardSet[j].value;
-                    cardSet[i].color = cardSet[j].color;
-
-                    cardSet[j].value = v;
-                    cardSet[j].color = col;
-                }
-            }
-        }
-    }
-
     void displayPublicCard()
     {
         cout << "The public card :\n";
@@ -471,7 +482,7 @@ private:
         cout << "The Player card :\n";
         for (int i = 0; i < this->playerCount; i++)
         {
-            this->allPlayer[i].displayCard();
+            this->allPlayer[i]->displayCard();
         }
         cout << endl;
     }

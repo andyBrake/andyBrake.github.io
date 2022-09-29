@@ -92,7 +92,28 @@ public:
         cout << "Player " << this->id << " hand-card " << this->cards[0] << ", " << this->cards[1] << endl;
     }
 
-private:
+    virtual int acquirePlayerBlind(int blindBet)
+    {
+        return 0;
+    }
+
+    virtual int waitPlayerPayBlind(int &bet)
+    {
+        
+        return 0;
+    }
+
+    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount)
+    {
+        cout<<"Default Player acquire action"<<endl;
+    }
+
+    virtual void getAction(bool &isFold, bool &isAllin, int &bet)
+    {
+        cout<<"Default Player get action"<<endl;
+    }
+
+protected:
     int channelId; // the channel ID to communicate with this player client
     Card cards[2];
 
@@ -114,16 +135,32 @@ public:
         this->response.isFold = isFold();
         this->response.isAllIn = isAllin();
         this->response.bet = 0;
+        this->blindBet = 0;
     }
 
     ~Robot()
     {
     }
 
-    void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount)
+    virtual int acquirePlayerBlind(int blindBet)
+    {
+        this->blindBet = blindBet;
+        return 0;
+    }
+
+    virtual int waitPlayerPayBlind(int &bet)
+    {
+        bet = this->blindBet;
+        this->totalBet -= bet;
+
+        return 0;
+    }
+
+
+    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount)
     {
         // Blind Player just call
-        if (1 == getId())
+        if (this->isBlind)
         {
             this->response.isFold = false;
             this->response.isAllIn = false;
@@ -143,7 +180,7 @@ public:
         }
     }
 
-    void getAction(bool &isFold, bool &isAllin, int &bet)
+    virtual void getAction(bool &isFold, bool &isAllin, int &bet)
     {
         isFold = this->response.isFold;
         isAllin = this->response.isAllIn;
@@ -154,6 +191,7 @@ public:
 
 private:
     Client2ServerMsg response;
+    int blindBet;
 };
 
 #endif

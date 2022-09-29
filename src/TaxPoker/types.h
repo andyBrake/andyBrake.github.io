@@ -31,12 +31,16 @@ enum eCardValue
     CV_9,
     CV_10,
 
-    CV_J,
-    CV_Q,
-    CV_K,
-    CV_A
+    CV_J,  // 11
+    CV_Q,  // 12
+    CV_K,  // 13
+    CV_A   // 14
 
 };
+
+
+static const string s[] = {"\u2664", "\u2661", "\u2663", "\u2662"};
+static const string v[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
 struct Card
 {
@@ -82,6 +86,12 @@ struct Card
         return false;
     }
 
+    void display()
+    {
+        cout << " Color " << this->color << ", Value " << setw(2) << this->value << ".  "\
+             << s[(int)this->color] << setw(2) << left << v[int(this->value) - 2];
+    }
+
     ~Card() {}
 
     Color color;      // enum of Card color, total 4 color
@@ -90,11 +100,7 @@ struct Card
 
 ostream &operator<<(ostream &os, const Card &ob)
 {
-    static string s[] = {"\u2664", "\u2661", "\u2663", "\u2662"};
-    static string v[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
-
-    os << " Color " << ob.color << ", Value " << setw(2) << ob.value << ".  "
-       << s[(int)ob.color] << setw(2) << left << v[int(ob.value) - 2];
+    os << s[(int)ob.color] << " "<<setw(2)<< v[int(ob.value) - 2]<<"   ";
 
     return os;
 }
