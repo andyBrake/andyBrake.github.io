@@ -82,8 +82,8 @@ public:
             {
                 if (cardSet[i].value < cardSet[j].value)
                 {
-                    eCardValue v = cardSet[i].value;
-                    Color col = cardSet[i].color;
+                    CardValue v = cardSet[i].value;
+                    CardColor col = cardSet[i].color;
 
                     cardSet[i].value = cardSet[j].value;
                     cardSet[i].color = cardSet[j].color;
@@ -205,7 +205,7 @@ bool Ruler::checkStraightFlush(const Card cardSet[], CardPower &cardPower)
         /* the A could be used as 1 */
         if (cardSet[0].value == CV_A)
         {
-            eCardValue value1 = CV_1;
+            CardValue value1 = CV_1;
 
             for (int i = Ruler::cMaxCardNum - 1; i >= 0; i--)
             {
@@ -268,7 +268,7 @@ bool Ruler::checkFourKind(const Card cardSet[], CardPower &cardPower)
 bool Ruler::checkWholeHouse(const Card cardSet[], CardPower &cardPower)
 {
     int len0, len1;
-    eCardValue cardVal3 = CV_INV;
+    CardValue cardVal3 = CV_INV;
 
     for (int i = 0; i < Ruler::cMaxCardNum; i++)
     {
@@ -339,7 +339,7 @@ bool Ruler::checkWholeHouse(const Card cardSet[], CardPower &cardPower)
 bool Ruler::checkFlush(const Card cardSet[], CardPower &cardPower)
 {
     int len4Color[] = {0, 0, 0, 0};
-    eCardValue key4Color[] = {CV_INV, CV_INV, CV_INV, CV_INV};
+    CardValue key4Color[] = {CV_INV, CV_INV, CV_INV, CV_INV};
 
     for (int i = 0; i < Ruler::cMaxCardNum; i++)
     {
@@ -393,7 +393,7 @@ bool Ruler::checkStraight(const Card cardSet[], CardPower &cardPower)
         /* the A could be used as 1 */
         if (cardSet[0].value == CV_A)
         {
-            eCardValue value1 = CV_1;
+            CardValue value1 = CV_1;
 
             for (int i = Ruler::cMaxCardNum - 1; i >= 0; i--)
             {
@@ -475,7 +475,7 @@ bool Ruler::checkSet(const Card cardSet[], CardPower &cardPower)
 
 bool Ruler::checkTwoPairs(const Card cardSet[], CardPower &cardPower)
 {
-    eCardValue key4Pair[2] = {CV_INV, CV_INV};
+    CardValue key4Pair[2] = {CV_INV, CV_INV};
     int pairIndex = 0;
 
     for (int i = 0; i < Ruler::cMaxCardNum; i++)

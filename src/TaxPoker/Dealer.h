@@ -274,8 +274,8 @@ class Dealer
         {
             for (int j=0;j<4;j++)
             {
-                initCard[index].color = (Color)j;
-                initCard[index].value = (eCardValue)i;
+                initCard[index].color = (CardColor)j;
+                initCard[index].value = (CardValue)i;
                 index++;
             }
         }
@@ -298,7 +298,7 @@ class Dealer
         int col = offset%4;
         int v = (offset/4) + 2;
 
-        return Card((Color)col, (eCardValue)v);
+        return Card((CardColor)col, (CardValue)v);
     }
 
     bool isUsedOffset(int offset)

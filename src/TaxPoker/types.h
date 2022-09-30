@@ -6,7 +6,7 @@
 
 using namespace std;
 
-enum Color // change to eCardColor
+enum CardColor // change to eCardColor
 {
     Spade = 0,   // 黑桃    \u2664
     Hearts = 1,  // 红桃    \u2661
@@ -16,7 +16,7 @@ enum Color // change to eCardColor
     ColorNum = 4
 };
 
-enum eCardValue
+enum CardValue
 {
     CV_INV = 0,
 
@@ -52,7 +52,7 @@ struct Card
         this->value = CV_INV;
     }
 
-    Card(Color color, eCardValue value)
+    Card(CardColor color, CardValue value)
     {
         this->color = color;
         this->value = value;
@@ -94,8 +94,8 @@ struct Card
 
     ~Card() {}
 
-    Color color;      // enum of Card color, total 4 color
-    eCardValue value; // from 1 to 14. J means 11, Q means 12, K means 13， A means 14 or 1.
+    CardColor color;      // enum of Card color, total 4 color
+    CardValue value; // from 1 to 14. J means 11, Q means 12, K means 13， A means 14 or 1.
 };
 
 ostream &operator<<(ostream &os, const Card &ob)
