@@ -11,9 +11,15 @@
 
 using namespace std;
 
+/***************************************************************
+The structure to describe the Power of a group card - we call it card set.
+Each card set (5 public card + 2 player private card) should have a power value
+to indicate how powerful it is. It's easy to compare two card set through the power
+***************************************************************/
 struct CardPower
 {
-    eLevel level;
+    CardLevel level;
+    
     int key1;
     int key2;
     int key3;
@@ -40,10 +46,15 @@ struct CardPower
     }
 };
 
-typedef bool (*checkFunc)(const Card cardSet[], CardPower &cardPower);
+//typedef bool (*checkFunc)(const Card cardSet[], CardPower &cardPower);
+using checkFunc = bool (*)(const Card cardSet[], CardPower &cardPower);
 
-// checkFunc = bool (*)(const Card cardSet[], CardPower &cardPower);
+/***************************************************************
+The class to arbit which card set is stronger based on their power value.
+As well, it provide these method to judge the possibility of card set win.
 
+Notes: The Ruler function must be staic in current design
+***************************************************************/
 class Ruler
 {
 
@@ -51,84 +62,25 @@ private:
     Ruler() {}
     ~Ruler() {}
 
-public:
-    static const int cLevelCount = 9; // total 9 level
-    static const int cLevelWeight = 100000;
-    static const int cKey1Weight = 10000;
-    static const int cKey2Weight = 1000;
-    static const int cKey3Weight = 100;
-    static const int cKey4Weight = 10;
-    static const int cMaxCardNum = 7; // at most, there are 7 Card
-    static const int cStraightLength = 5;
-
-    /* the Ruler function must be staic */
-    static int calCardSetPower(const Card cardSet[], const int cardCount) // the card count should be 7
-    {
-        // struct Ruler::CardPower cardPower;
-        int power = 0;
-
-        //: TODO
-
-        // power = getPower(cardPower);
-        return power;
-    }
-
-    // Sort in card value decrement order
-    static void sortCardSet(Card cardSet[])
-    {
-        for (int i = 0; i < (int)eCardSetNum; i++)
-        {
-            for (int j = i; j < (int)eCardSetNum; j++)
-            {
-                if (cardSet[i].value < cardSet[j].value)
-                {
-                    CardValue v = cardSet[i].value;
-                    CardColor col = cardSet[i].color;
-
-                    cardSet[i].value = cardSet[j].value;
-                    cardSet[i].color = cardSet[j].color;
-
-                    cardSet[j].value = v;
-                    cardSet[j].color = col;
-                }
-            }
-        }
-    }
-
+    /* These check function group to determinate the Card Set Level */
     static bool checkStraightFlush(const Card cardSet[], CardPower &cardPower);
-
     static bool checkFourKind(const Card cardSet[], CardPower &cardPower);
-
     static bool checkWholeHouse(const Card cardSet[], CardPower &cardPower);
-
     static bool checkFlush(const Card cardSet[], CardPower &cardPower);
-
     static bool checkStraight(const Card cardSet[], CardPower &cardPower);
-
     static bool checkSet(const Card cardSet[], CardPower &cardPower);
-
     static bool checkTwoPairs(const Card cardSet[], CardPower &cardPower);
-
     static bool checkOnePairs(const Card cardSet[], CardPower &cardPower);
-
     static bool confirmHighCard(const Card cardSet[], CardPower &cardPower);
 
-    static void showCardPowerInfo(const CardPower &cardPower)
-    {
-        printf("Card Power, Level : %u\n\tKey 1 : %d, Key 2 : %d, Key 3 : %d, Key 4 : %d, Key 5 : %d\n\n",
-               (unsigned int)cardPower.level,
-               cardPower.key1,
-               cardPower.key2,
-               cardPower.key3,
-               cardPower.key4,
-               cardPower.key5);
-    }
 
+    /* To calculate the card set power value through the CardPower */    
     static int getPower(CardPower &cardPower)
     {
         return (cardPower.level * cLevelWeight + cardPower.key1 * cKey1Weight + cardPower.key2 * cKey2Weight + cardPower.key3 * cKey3Weight + cardPower.key4 * cKey4Weight + cardPower.key5);
     }
 
+    /* The key method of Ruler, to confirm the card set level, and the related Key value */
     static void confirmPower(const Card cardSet[], CardPower &cardPower)
     {
         static checkFunc funcArray[Ruler::cLevelCount] =
@@ -172,6 +124,62 @@ public:
             }
         }
     }
+    
+public:
+    static const int cLevelCount = TotalLevelCount;
+    static const int cLevelWeight = 100000;
+    static const int cKey1Weight = 10000;
+    static const int cKey2Weight = 1000;
+    static const int cKey3Weight = 100;
+    static const int cKey4Weight = 10;
+    static const int cMaxCardNum = (int)eCardSetNum;
+    static const int cStraightLength = 5;
+
+    static int calCardSetPower(const Card cardSet[], const int cardCount)
+    {
+        CardPower cardPower;
+        int power = 0;
+
+        confirmPower( cardSet, cardPower);
+
+        power = getPower(cardPower);
+
+        return power;
+    }
+
+    // Sort in card value decrement order
+    static void sortCardSet(Card cardSet[], CardNumber cardCnt = eCardSetNum)
+    {
+        for (int i = 0; i < (int)cardCnt; i++)
+        {
+            for (int j = i; j < (int)cardCnt; j++)
+            {
+                if (cardSet[i].value < cardSet[j].value)
+                {
+                    CardValue v = cardSet[i].value;
+                    CardColor col = cardSet[i].color;
+
+                    cardSet[i].value = cardSet[j].value;
+                    cardSet[i].color = cardSet[j].color;
+
+                    cardSet[j].value = v;
+                    cardSet[j].color = col;
+                }
+            }
+        }
+    }
+
+    static void showCardPowerInfo(const CardPower &cardPower)
+    {
+        printf("Card Power, Level : %u\n\tKey 1 : %d, Key 2 : %d, Key 3 : %d, Key 4 : %d, Key 5 : %d\n\n",
+               (unsigned int)cardPower.level,
+               cardPower.key1,
+               cardPower.key2,
+               cardPower.key3,
+               cardPower.key4,
+               cardPower.key5);
+    }
+
 };
 
 /********************************************************************************************

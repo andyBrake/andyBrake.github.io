@@ -91,10 +91,24 @@ class Dealer
             pRemainCardQueue->enqueue(initCard[selectIndex]);
         }
 
-        cout<<"Wash Card Finish! Total Card Num "<<count<<endl;
+        //cout<<"Wash Card Finish! Total Card Num "<<count<<endl;
         return;
     }
 
+    void clearUsedBitmap()
+    {
+        usedBitmap = 0;
+    }
+
+
+    Card getCardbyOffset(int offset)
+    {
+        int col = offset%4;
+        int v = (offset/4) + 2;
+
+        return Card((CardColor)col, (CardValue)v);
+    }
+    
     void splitCard(int splitCount = 1) // set the split count, must set before each deal operation
     {
         if (splitCount > cCardTotalNum/2)
@@ -156,13 +170,12 @@ class Dealer
         this->set1[1] = cardSet11;
     }
 
-    void listAllCardCombine()
+    void listAllPublicCardCombine()
     {
         int card0, card1, card2, card3, card4;
         int totalSetCnt = 0;
         int winCnt = 0, equalCnt = 0, loseCnt = 0;
 
-        cout<<"start to list all combo "<<usedBitmap<<endl;
         // card 0
         for (card0 = 0; card0 <cCardTotalNum; card0++)
         {
@@ -220,8 +233,8 @@ class Dealer
             }
         }
 
-        cout<<"Total Set count is "<<totalSetCnt<<endl;
-        cout<<"Total Win count is "<<winCnt<<" ; Equal count is "<<equalCnt<<" ; Lose count is "<<loseCnt<<endl;
+        //cout<<"Total Set count is "<<totalSetCnt<<endl;
+        //cout<<"Total Win count is "<<winCnt<<" ; Equal count is "<<equalCnt<<" ; Lose count is "<<loseCnt<<endl;
         cout<<"Ratio is "<<(double)winCnt/(double)totalSetCnt <<" ; "<<(double)equalCnt/(double)totalSetCnt
             <<" ; "<<(double)loseCnt/(double)totalSetCnt<<endl;
 
@@ -230,28 +243,7 @@ class Dealer
             cout<<"!!!! Unexpected Error!!!"<<endl;
             exit(0);
         }
-    }
-
-    // calculate the C(n, m) , n>= m
-    unsigned long getComboCount(int n, int m)
-    {
-        int i = 1;
-        int x = 1, y = 1;
-
-        while(i <= m)
-        {
-            y = y * i;
-            i++;
-        }
-        cout<<"\t m! = "<<y<<endl;
-
-        for (i=n; i> (n-m); i--)
-        {
-            x = x * i;
-        }
-        cout<<"\t n!/(n-m)! = "<<x<<endl;
-
-        return x/y;
+        return;
     }
 
     private:
@@ -281,24 +273,17 @@ class Dealer
         }
         usedBitmap = 0;
 
-        cout<<"Init total "<<index<<" Cards."<<endl;
+        //cout<<"Init total "<<index<<" Cards."<<endl;
         return;
     }
 
     int getCardBitOffset(Card card)
     {
         int v = (int)(card.value - CV_2);
-            v = v*4 + (int)card.color;
-        cout<<card<<"  bit offset is "<<v<<endl;
+
+        v = v*4 + (int)card.color;
+        //cout<<card<<"  bit offset is "<<v<<endl;
         return v;
-    }
-
-    Card getCardbyOffset(int offset)
-    {
-        int col = offset%4;
-        int v = (offset/4) + 2;
-
-        return Card((CardColor)col, (CardValue)v);
     }
 
     bool isUsedOffset(int offset)
@@ -336,11 +321,8 @@ class Dealer
         Ruler::sortCardSet(cardSet0);
         Ruler::sortCardSet(cardSet1);
 
-        Ruler::confirmPower(cardSet0, cardPower0);
-        Ruler::confirmPower(cardSet1, cardPower1);
-
-        power0 = Ruler::getPower(cardPower0);
-        power1 = Ruler::getPower(cardPower1);
+        power0 = Ruler::calCardSetPower(cardSet0, eCardSetNum);
+        power1 = Ruler::calCardSetPower(cardSet1, eCardSetNum);
 
         if (power0 > power1)
         {

@@ -6,11 +6,15 @@
 
 using namespace std;
 
+
 int main()
 {
-    PokerTable table(8);
+    //PokerTable table(8);
 
-    table.startGame();
+    //PokerTable::runTest();
+    //table.startGame();
+    
+    PokerTable::runAllCaseTest();
     
     return 0;
 }

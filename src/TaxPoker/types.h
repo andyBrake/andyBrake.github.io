@@ -105,7 +105,7 @@ ostream &operator<<(ostream &os, const Card &ob)
     return os;
 }
 
-enum
+enum CardNumber
 {
     ePublicCardNum = 5,
     ePrivateCardNum = 2,
@@ -117,7 +117,7 @@ enum
     eCardSetNum = ePublicCardNum + ePrivateCardNum
 };
 
-enum eLevel
+enum CardLevel
 {
     Unkown = 0,
     HighCardLevel = 1,
@@ -129,6 +129,8 @@ enum eLevel
     WholeHouseLevel = 7,    // 3 + 2
     FourKindLevel = 8,      // Four of a Kind
     StraightFlushLevel = 9, // same color, sort
+
+    TotalLevelCount = 9        
 };
 
 enum GameStatus

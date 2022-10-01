@@ -73,43 +73,6 @@ public:
 
         cout << "The Host pos is " << hostPos << ", the Blind pos is " << sbPos << endl;
 
-#if 1 // for test
-        dealer.acquireSpecialCard(Card(Spade,   CV_K));
-        dealer.acquireSpecialCard(Card(Hearts,  CV_K)); 
-        dealer.acquireSpecialCard(Card(Club,    CV_A));
-        dealer.acquireSpecialCard(Card(Diamond, CV_A));
-
-        dealer.setPrivateCardSet(Card(Spade,    CV_K),
-                                 Card(Hearts,   CV_K),
-                                 Card(Club,     CV_A),
-                                 Card(Diamond,  CV_A)
-                                );
-#if 0
-        // for test, disable some card here
-        dealer.acquireSpecialCard(Card(Spade, CV_10));
-        dealer.acquireSpecialCard(Card(Spade, CV_J)); 
-        dealer.acquireSpecialCard(Card(Spade, CV_Q));
-        dealer.acquireSpecialCard(Card(Spade, CV_K));
-        dealer.acquireSpecialCard(Card(Hearts, CV_10));
-        dealer.acquireSpecialCard(Card(Hearts, CV_J)); 
-        dealer.acquireSpecialCard(Card(Hearts, CV_Q));
-        dealer.acquireSpecialCard(Card(Hearts, CV_K));
-        dealer.acquireSpecialCard(Card(Club, CV_10));
-        dealer.acquireSpecialCard(Card(Club, CV_J)); 
-        dealer.acquireSpecialCard(Card(Club, CV_Q));
-        dealer.acquireSpecialCard(Card(Club, CV_K));
-        dealer.acquireSpecialCard(Card(Diamond, CV_10));
-        dealer.acquireSpecialCard(Card(Diamond, CV_J)); 
-        dealer.acquireSpecialCard(Card(Diamond, CV_Q));
-        dealer.acquireSpecialCard(Card(Diamond, CV_K));
-#endif
-
-        dealer.listAllCardCombine();
-
-        unsigned long testRet = dealer.getComboCount(48, 5);
-        cout<<"The combo count is "<<testRet<<endl;
-        exit(0);
-#endif
         /* Set Blind bet */
         ret = acquirePlayerBlind(*allPlayer[sbPos], currentLoopBet);
 
@@ -189,9 +152,8 @@ public:
             }
             cout << endl;
 
-            Ruler::confirmPower(cardSet, cardPower);
+            power = Ruler::calCardSetPower(cardSet, eCardSetNum);
 
-            power = Ruler::getPower(cardPower);
             allPower[i] = power;
         }
 
@@ -422,6 +384,116 @@ public:
         return 0;
     }
 
+    
+    // calculate the C(n, m) 
+    static unsigned long getComboCount(int n, int m)
+    {
+        int i = 1;
+        int x = 1, y = 1;
+        // make sure the n >= m, otherwise swap them
+        if (n < m)
+        {
+            int tmp = n;
+            n = m;
+            m = tmp;
+        }
+
+        while(i <= m)
+        {
+            y = y * i;
+            i++;
+        }
+
+        for (i=n; i> (n-m); i--)
+        {
+            x = x * i;
+        }
+        cout<<"\t m! = "<<y<<",\t n!/(n-m)! = "<<x<<endl;
+
+        return x/y;
+    }
+
+    static void runTest()
+    {
+        Dealer *pDealer = new Dealer();
+        
+        pDealer->washCard();
+        pDealer->acquireSpecialCard(Card(Spade,   CV_K));
+        pDealer->acquireSpecialCard(Card(Hearts,  CV_K)); 
+        pDealer->acquireSpecialCard(Card(Club,    CV_A));
+        pDealer->acquireSpecialCard(Card(Diamond, CV_A));
+
+        pDealer->setPrivateCardSet(Card(Spade,    CV_K),
+                                 Card(Hearts,   CV_K),
+                                 Card(Club,     CV_A),
+                                 Card(Diamond,  CV_A)
+                                );
+#if 0
+        // for test, disable some card here
+        dealer.acquireSpecialCard(Card(Spade, CV_10));
+        dealer.acquireSpecialCard(Card(Spade, CV_J)); 
+        dealer.acquireSpecialCard(Card(Spade, CV_Q));
+        dealer.acquireSpecialCard(Card(Spade, CV_K));
+        dealer.acquireSpecialCard(Card(Hearts, CV_10));
+        dealer.acquireSpecialCard(Card(Hearts, CV_J)); 
+        dealer.acquireSpecialCard(Card(Hearts, CV_Q));
+        dealer.acquireSpecialCard(Card(Hearts, CV_K));
+        dealer.acquireSpecialCard(Card(Club, CV_10));
+        dealer.acquireSpecialCard(Card(Club, CV_J)); 
+        dealer.acquireSpecialCard(Card(Club, CV_Q));
+        dealer.acquireSpecialCard(Card(Club, CV_K));
+        dealer.acquireSpecialCard(Card(Diamond, CV_10));
+        dealer.acquireSpecialCard(Card(Diamond, CV_J)); 
+        dealer.acquireSpecialCard(Card(Diamond, CV_Q));
+        dealer.acquireSpecialCard(Card(Diamond, CV_K));
+#endif
+
+        pDealer->listAllPublicCardCombine();
+
+        delete pDealer;
+        pDealer = NULL;
+
+        unsigned long testRet = getComboCount(48, 5);
+        cout<<"The combo count is "<<testRet<<endl;
+
+        return;
+    }
+
+    /* Generate all versus case, and calculate their win possibility */
+    static void runAllCaseTest()
+    {
+        Card cards[4];
+        Dealer *pDealer = new Dealer();
+
+        unsigned long ret = getComboCount(52, 4);
+        cout<<"C(52, 4) = "<<ret<<endl;
+
+        /* Select 4 card as a group to analysis, there are C(52, 4) combination */
+        for (int i0 = 0; i0 < Dealer::cCardTotalNum; i0++)
+        {
+            for (int i1 = i0+1; i1< Dealer::cCardTotalNum ; i1++)
+            {
+                for (int i2 = i1+1; i2< Dealer::cCardTotalNum ; i2++)
+                {
+                    for (int i3 = i2+1; i3< Dealer::cCardTotalNum ; i3++)
+                    {
+                        cards[0] = pDealer->getCardbyOffset(i0);
+                        cards[1] = pDealer->getCardbyOffset(i1);
+                        cards[2] = pDealer->getCardbyOffset(i2);
+                        cards[3] = pDealer->getCardbyOffset(i3);
+
+                        /* To analysis the group's combination */
+                        runSpecTest(pDealer, cards);
+                    }
+                }
+            }
+        
+        }
+        
+        delete pDealer;
+        return;
+    }
+
 private:
     Player *allPlayer[cMaxPlayerCount];
     Dealer dealer;
@@ -485,6 +557,57 @@ private:
             this->allPlayer[i]->displayCard();
         }
         cout << endl;
+    }
+
+    /* Assume 4 card as a group, then the 4 card can generate 6 types combination for versus */
+    static void runSpecTest(Dealer *pDealer, Card  cards[4])
+    {
+        pDealer->clearUsedBitmap();
+
+        for (int i=0; i<4; i++)
+        {
+            pDealer->acquireSpecialCard(cards[i]);
+        }
+        /* Value same, only the color is different, don't need to judge, because always equal power */
+        if ((cards[0].value == cards[1].value) && (cards[0].value == cards[2].value) && (cards[0].value == cards[3].value))
+        {
+            pDealer->setPrivateCardSet(cards[0], cards[1], cards[2], cards[3]);
+
+            cout<<"\n\ncombination : "<<cards[0]<<cards[1] << " VS    "<< cards[2] << cards[3] <<endl;
+            cout<<"Ratio is "<<0<<" ; "<<1 <<" ; "<<0<<endl;
+
+            return;
+        }
+    
+        for (int i=0; i<4; i++)
+        {
+            for (int j= i+1; j<4; j++)
+            {
+                for (int m =0; m<4; m++)
+                {
+                    int n = 0;
+                    
+                    if ((m == i) ||( m == j) )
+                    {
+                        continue;
+                    }
+                    
+                    while((n< 4) & ((n == i) || (n == j) || (n>=m))) n++;
+                    if (n >= 4)
+                    {
+                        continue;
+                    }
+
+                    pDealer->setPrivateCardSet(cards[i], cards[j], cards[m], cards[n]);
+                    cout<<"\n\ncombination : "<<cards[i]<<cards[j] << " VS    "<< cards[m] << cards[n] <<endl;
+
+                    /* For the 6 types player card combination, each type has C(48, 5) situation */
+                    //pDealer->listAllPublicCardCombine();
+                }
+            }
+        }
+
+        return;
     }
 };
 
