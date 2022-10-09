@@ -205,13 +205,51 @@ public:
 
         return false;
     }
+/*
+{
+    Type : 0
+    Player Name: Fa
+    Player ID: 1
+}
 
-    void fillMsg(char msg[], int action, int bet)
+{
+    Type : 1
+    Player ID: 1
+    Status:1         # Status 分类：0 表示Ready， 1 表示 Start
+}
+
+{
+    Type : 2
+    Player ID: 1
+    Option:0         # 0 Blind, 1 Bet
+    Bet:5            # 表示最低需要支付的筹码值
+    Behind: 7        # 表示在你之后，还有多少位Player决策。例如Blind消息，Behind则为0，因为只需要一个Player支付盲注
+    Bonus: 100       # 表示当前底池总共有多少价值
+}
+*/
+    void fillMsg(char msg[], char name[], int id)
     {
-        // Option : Blind, Check, Bet
-        const char * msgFormat = "Option:%s;\nRequireBet:%u;\nBehind:%u;\n";
+        const char * type0format = "Type:%u;\nPlayer Name:%s;\nPlayer ID:%u\n";
 
-        sprintf(msg, msgFormat, (0 == action)?"Blind":"None", bet, 0);
+        sprintf(msg, type0format, 0, name, id);
+
+        return;
+    }
+
+    void fillMsg(char msg[], int id, int status)
+    {
+        const char * type1format = "Type:%u;\nPlayer ID:%u;\nStatus:%u\n";
+
+        sprintf(msg, type1format, 1, id, status);
+
+        return;
+    }
+
+    void fillMsg(char msg[], int id, int option, int bet, int behind, int bonus)
+    {
+        const char * type2format = "Type:%u;\nPlayer ID:%u;\nOption:%u;\nBet:%u;\nBehind:%u;\nBonus:%u\n";
+
+        sprintf(msg, type2format, 2, id, option, bet, behind, bonus);
 
         return;
     }

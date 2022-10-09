@@ -63,8 +63,6 @@ public:
     {
         int playerCnt = 0;
 
-        cout<<"To Get Total Player Count "<<endl;
-
         assert(NULL != pTable);
         
         while(playerCnt < leastPlayerCnt)
@@ -96,6 +94,7 @@ public:
     {
         int port = Server::Port;
         char msg[MsgBufferLen];
+        char name[30] = "Fa"; 
 
         sockaddr_in servAddr;
         bzero((char*)&servAddr, sizeof(servAddr));
@@ -143,17 +142,13 @@ public:
                 cerr << "Error accepting request from client IP " <<newSockAddr.sin_addr.s_addr << endl;
                 exit(1);
             }
-            cout << "Connected with client IP " <<inet_ntoa(newSockAddr.sin_addr)<< endl;
-
-            //strcpy(msg, "Who are you?");
-            //send(playerSockId, (char*)&msg, strlen(msg), 0);
-
+            cout << "\t\tConnected with client IP " <<inet_ntoa(newSockAddr.sin_addr)<< endl;
+            /* get the client player name, and assign a player id right now */
             memset(&msg, 0, sizeof(msg));
             recv(playerSockId, (char*)&msg, sizeof(msg), 0);
-            cout<<"Rcv Client Msg:"<<msg<<endl;
+            cout<<"Rcv Client Msg:{\n"<<msg<<"\n}"<<endl;
 
-            int playerId = pTable->addPlayer(playerSockId);
-            cout<<"Remote Player ID assign:"<<playerId<<endl;
+            int playerId = pTable->addPlayer(playerSockId, name);
 
             isPlayerReady = true;
 

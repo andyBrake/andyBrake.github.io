@@ -199,7 +199,7 @@ int main()
     /* At least there is 2 player to play game */
     server.waitPlayerJoin(2);
 
-    cout<<"Start to game..."<<endl;
+    cout<<"\nStart to game..."<<endl;
 
     server.startGame();
 

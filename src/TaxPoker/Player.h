@@ -21,8 +21,11 @@ enum PlayerStatus
 class Player
 {
 public:
+    const static int cMaxNameLen = 20;
+    
     Player()
     {
+        strcpy(this->name, "Default Player");
     }
 
     ~Player()
@@ -38,13 +41,17 @@ public:
         this->isAllIn = false;
         this->status = PS_Waiting;
 
-        cout << "Player " << this->id << " Init." << endl;
         return;
     }
 
     void setBlind()
     {
         this->isBlind = true;
+    }
+
+    void setName(char name[])
+    {
+        strncpy(this->name, name, cMaxNameLen);
     }
 
     void adjustBet(int change)
@@ -145,6 +152,7 @@ protected:
     Card cards[2];
 
     int id; // the sequence in table
+    char name[cMaxNameLen];
     PlayerType type;
     PlayerStatus status;
     bool isBlind;
@@ -256,17 +264,62 @@ public:
         this->playerSockId = sockId;
     }
 
+    void notifyPlayerId()
+    {
+        memset(msg, 0, sizeof(msg));
+        request.fillMsg(msg, this->name, this->id);
+
+        send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
+
+        cout<<"Connect Send Request:{\n"<<msg<<"}"<<endl;
+        sleep(1);
+        
+        do
+        {
+            memset(msg, 0, sizeof(msg));
+            recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
+
+            cout<<"Confirm Ready Rcv Reponse:{\n"<<msg<<"}"<<endl;
+        }while(0);
+    }
+
+    virtual void active()
+    {
+        Player::active();
+        /* Notify the Remote Player Start Game */
+        memset(msg, 0, sizeof(msg));
+        request.fillMsg(msg, this->id, 1);
+
+        send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
+
+        cout<<"Start Send Request:\n{"<<msg<<"}"<<endl;
+        sleep(1);
+
+        /* must wait for the Client confirm start status */
+        do
+        {
+            memset(msg, 0, sizeof(msg));
+            recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
+
+            cout<<"Confirm Start, Rcv Reponse:{\n"<<msg<<"}"<<endl;
+        }while(0);
+    }
+
     virtual int acquirePlayerBlind(int blindBet)
     {
         this->blindBet = blindBet;
 
         memset(msg, 0, sizeof(msg));
-        request.fillMsg(msg, 0, blindBet);
+        request.fillMsg(msg, this->id, 
+                                    0, // Blind option
+                                    blindBet, // bet
+                                    0, // behind player count, useless now
+                                    100 // bonus
+                                    );
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
-        cout<<"Player sock id "<<this->playerSockId<<endl;
-        cout<<"Send Request:\n"<<msg<<endl;
+        cout<<"Acquire Blind Send Request:{\n"<<msg<<"}"<<endl;
         
         return 0;
     }
@@ -276,14 +329,14 @@ public:
         bet = this->blindBet;
         this->totalBet -= bet;
 
-        int loop = 10;
+        int loop = 2;
 
         do
         {
             memset(msg, 0, sizeof(msg));
             recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
 
-            cout<<"Rcv Reponse:{\n"<<msg<<"\n}"<<endl;
+            cout<<"Rcv Reponse:{\n"<<msg<<"}"<<endl;
             sleep(3);
         }while(loop--);
         

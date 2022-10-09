@@ -102,7 +102,7 @@ public:
     }
 
     /* Add a Remote Player */
-    int addPlayer(int playerSockId)
+    int addPlayer(int playerSockId, char name[])
     {
         int playerId = -1;
 
@@ -113,9 +113,11 @@ public:
                 playerId = i;
                 RemotePlayer *pRemotePlayer = new RemotePlayer(playerId);
                 pRemotePlayer->setSockId(playerSockId);
+                pRemotePlayer->setName(name);
+                pRemotePlayer->notifyPlayerId();
                 allPlayer[i] = pRemotePlayer;
 
-                cout<<"Add Player to ID "<<playerId<<", Sock "<<playerSockId<<endl;
+                cout<<"Add Remote Player to ID "<<playerId<<", Sock "<<playerSockId<<endl;
                 break;
             }
         }
