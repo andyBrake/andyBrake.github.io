@@ -233,8 +233,8 @@ class Dealer
             }
         }
 
-        //cout<<"Total Set count is "<<totalSetCnt<<endl;
-        //cout<<"Total Win count is "<<winCnt<<" ; Equal count is "<<equalCnt<<" ; Lose count is "<<loseCnt<<endl;
+        cout<<"Total Set count is "<<totalSetCnt<<endl;
+        cout<<"Total Win count is "<<winCnt<<" ; Equal count is "<<equalCnt<<" ; Lose count is "<<loseCnt<<endl;
         cout<<"Ratio is "<<(double)winCnt/(double)totalSetCnt <<" ; "<<(double)equalCnt/(double)totalSetCnt
             <<" ; "<<(double)loseCnt/(double)totalSetCnt<<endl;
 
@@ -244,6 +244,15 @@ class Dealer
             exit(0);
         }
         return;
+    }
+
+    bool isUsedOffset(int offset)
+    {
+        if (this->usedBitmap & (1ull<<offset))
+        {
+            return true;
+        }
+        return false;
     }
 
     private:
@@ -286,14 +295,7 @@ class Dealer
         return v;
     }
 
-    bool isUsedOffset(int offset)
-    {
-        if (this->usedBitmap & (1ull<<offset))
-        {
-            return true;
-        }
-        return false;
-    }
+
 
     int CompareCardSetPower(int card0, int card1, int card2, int card3, int card4)
     {

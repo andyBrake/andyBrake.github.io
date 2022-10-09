@@ -11,10 +11,12 @@ int main()
 {
     //PokerTable table(8);
 
-    //PokerTable::runTest();
+    PokerTable::runTest();
     //table.startGame();
     
-    PokerTable::runAllCaseTest();
+    //PokerTable::runAllCaseTest();
+
+    //PokerTable::runSinglePlayerTest();
     
     return 0;
 }

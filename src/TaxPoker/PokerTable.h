@@ -26,7 +26,7 @@ public:
     {
         assert(playerCount <= cMaxPlayerCount);
 
-        this->playerCount = playerCount;
+        this->playerCount = 0;
 
         gameCount = 0;
         roundCount = 0;
@@ -39,10 +39,9 @@ public:
 
         this->status = GS_Init;
 
-        /* Default, all player are robot */
         for (int i = 0; i < cMaxPlayerCount; i++)
         {
-            allPlayer[i] =new Robot(i);
+            allPlayer[i] = NULL;
         }
 
         channel.init(cMaxPlayerCount);
@@ -50,6 +49,98 @@ public:
 
     ~PokerTable()
     {
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] != NULL)
+            {
+                delete allPlayer[i];
+                allPlayer[i] = NULL;
+            }
+        }
+        return;
+    }
+
+    int getPlayerCount(bool isActive = false)
+    {
+        /* total include waiting and playing player, active only consider playing player */
+        int totalCnt = 0, activeCnt = 0;
+
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] != NULL)
+            {
+                if (PS_Playing == allPlayer[i]->getStatus())
+                {
+                    activeCnt++;
+                }
+                
+                totalCnt++;
+            }
+        }
+
+        return isActive ? activeCnt : totalCnt;
+    }
+
+    /* Add a Local Player */
+    int addPlayer(void)
+    {
+        int playerId = -1;
+
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] == NULL)
+            {
+                playerId = i;
+                allPlayer[i] = new Robot(i);
+
+                cout<<"Add Player to ID "<<playerId<<endl;
+                break;
+            }
+        }
+
+        return playerId;
+    }
+
+    /* Add a Remote Player */
+    int addPlayer(int playerSockId)
+    {
+        int playerId = -1;
+
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] == NULL)
+            {
+                playerId = i;
+                RemotePlayer *pRemotePlayer = new RemotePlayer(playerId);
+                pRemotePlayer->setSockId(playerSockId);
+                allPlayer[i] = pRemotePlayer;
+
+                cout<<"Add Player to ID "<<playerId<<", Sock "<<playerSockId<<endl;
+                break;
+            }
+        }
+
+        return playerId;
+    }
+
+    void update()
+    {
+        int cnt = 0;
+        
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] != NULL)
+            {
+                if (PS_Waiting == allPlayer[i]->getStatus())
+                {
+                    allPlayer[i]->active();
+                    this->playerCount++;
+                    cnt++;
+                }
+            }
+        }
+        cout<<"Active Player Count "<<cnt<<endl;
+        return;
     }
 
     /* start a match, return if generate winner */
@@ -69,14 +160,17 @@ public:
         this->dealedCardCount = 0;
         this->stayPlayerCount = this->playerCount;
 
+        assert(NULL != allPlayer[this->sbPos]);
+        allPlayer[this->sbPos]->setBlind();
+
         dealer.washCard();
 
-        cout << "The Host pos is " << hostPos << ", the Blind pos is " << sbPos << endl;
+        cout << "The Host pos is " << hostPos << ", the Blind pos is " << sbPos <<", Player cnt "<<this->playerCount<< endl;
 
         /* Set Blind bet */
-        ret = acquirePlayerBlind(*allPlayer[sbPos], currentLoopBet);
+        ret = acquirePlayerBlind(allPlayer[sbPos], currentLoopBet);
 
-        ret = waitPlayerPayBlind(*allPlayer[sbPos], bet);
+        ret = waitPlayerPayBlind(allPlayer[sbPos], bet);
 
         bounsPool += currentLoopBet;
 
@@ -88,13 +182,13 @@ public:
         this->status = GS_preFlop;
         betLoop(sbPos);
 
-        cout << "Pre Flop finish, alive " << this->stayPlayerCount << " Player\n"
-             << endl;
+        cout << "Pre Flop finish, alive " << this->stayPlayerCount << " Player\n\n";
         cout << "The bonus pool is " << bounsPool << endl;
 
         assert(this->stayPlayerCount > 0);
         if (this->stayPlayerCount == 1)
         {
+            cout<<"This round finish!\n";
             moveBouns();
             return;
         }
@@ -267,9 +361,9 @@ public:
 
             Player *curPlayer = allPlayer[startPos];
 
-            if (curPlayer->isFold())
+            if (curPlayer->isFold() || NULL == curPlayer)
             {
-                cout << "  Skip fold Player " << curPlayer->getId() << endl;
+                cout << "  Skip Position " << startPos << endl;
 
                 if (isLoopEnd(startPos))
                 {
@@ -341,11 +435,11 @@ public:
     {
     }
 
-    int acquirePlayerBlind(Player &player, int blindBet)
+    int acquirePlayerBlind(Player *pPlayer, int blindBet)
     {
         int ret = 0;
 
-        ret = player.acquirePlayerBlind(blindBet);
+        ret = pPlayer->acquirePlayerBlind(blindBet);
 #if 0
         Server2ClientMsg msg;
 
@@ -359,9 +453,9 @@ public:
         return ret;
     }
 
-    int waitPlayerPayBlind(Player &player, int &bet)
+    int waitPlayerPayBlind(Player *pPlayer, int &bet)
     {
-        player.waitPlayerPayBlind(bet);
+        pPlayer->waitPlayerPayBlind(bet);
 
         return 0;
     }
@@ -416,37 +510,21 @@ public:
     static void runTest()
     {
         Dealer *pDealer = new Dealer();
+        Card player0Card0 = Card(Spade,   CV_2);
+        Card player0Card1 = Card(Hearts,  CV_2);
+        
+        Card player1Card0 = Card(Club,        CV_2);
+        Card player1Card1 = Card(Diamond, CV_2);
+
+        cout<<"The Test for : "<<player0Card0<<player0Card1<<" VS "<<player1Card0<<player1Card1<<endl;
         
         pDealer->washCard();
-        pDealer->acquireSpecialCard(Card(Spade,   CV_K));
-        pDealer->acquireSpecialCard(Card(Hearts,  CV_K)); 
-        pDealer->acquireSpecialCard(Card(Club,    CV_A));
-        pDealer->acquireSpecialCard(Card(Diamond, CV_A));
+        pDealer->acquireSpecialCard(player0Card0);
+        pDealer->acquireSpecialCard(player0Card1); 
+        pDealer->acquireSpecialCard(player1Card0);
+        pDealer->acquireSpecialCard(player1Card1);
 
-        pDealer->setPrivateCardSet(Card(Spade,    CV_K),
-                                 Card(Hearts,   CV_K),
-                                 Card(Club,     CV_A),
-                                 Card(Diamond,  CV_A)
-                                );
-#if 0
-        // for test, disable some card here
-        dealer.acquireSpecialCard(Card(Spade, CV_10));
-        dealer.acquireSpecialCard(Card(Spade, CV_J)); 
-        dealer.acquireSpecialCard(Card(Spade, CV_Q));
-        dealer.acquireSpecialCard(Card(Spade, CV_K));
-        dealer.acquireSpecialCard(Card(Hearts, CV_10));
-        dealer.acquireSpecialCard(Card(Hearts, CV_J)); 
-        dealer.acquireSpecialCard(Card(Hearts, CV_Q));
-        dealer.acquireSpecialCard(Card(Hearts, CV_K));
-        dealer.acquireSpecialCard(Card(Club, CV_10));
-        dealer.acquireSpecialCard(Card(Club, CV_J)); 
-        dealer.acquireSpecialCard(Card(Club, CV_Q));
-        dealer.acquireSpecialCard(Card(Club, CV_K));
-        dealer.acquireSpecialCard(Card(Diamond, CV_10));
-        dealer.acquireSpecialCard(Card(Diamond, CV_J)); 
-        dealer.acquireSpecialCard(Card(Diamond, CV_Q));
-        dealer.acquireSpecialCard(Card(Diamond, CV_K));
-#endif
+        pDealer->setPrivateCardSet(player0Card0, player0Card1, player1Card0, player1Card1 );
 
         pDealer->listAllPublicCardCombine();
 
@@ -459,14 +537,17 @@ public:
         return;
     }
 
-    /* Generate all versus case, and calculate their win possibility */
+    /****************************************************************************************************************
+    Generate all versus case, and calculate their win possibility, and this case will cost hunderds of years, 
+    so don't try to RUN this case directly
+    *****************************************************************************************************************/
     static void runAllCaseTest()
     {
         Card cards[4];
         Dealer *pDealer = new Dealer();
 
         unsigned long ret = getComboCount(52, 4);
-        cout<<"C(52, 4) = "<<ret<<endl;
+        cout<<"C(50, 4) = "<<ret<<endl;
 
         /* Select 4 card as a group to analysis, there are C(52, 4) combination */
         for (int i0 = 0; i0 < Dealer::cCardTotalNum; i0++)
@@ -494,13 +575,58 @@ public:
         return;
     }
 
+    static void runSinglePlayerTest()
+    {
+        int card0, card1;
+        Dealer *pDealer = new Dealer();
+
+        pDealer->washCard();
+        pDealer->acquireSpecialCard(Card(Spade,  CV_2));
+        pDealer->acquireSpecialCard(Card(Hearts,  CV_2));
+
+        cout<<Card(Spade,  CV_2)<<"  "<<Card(Hearts,  CV_2)<<endl;
+
+         for (card0 = 0; card0 <Dealer::cCardTotalNum; card0++)
+        {
+            if (pDealer->isUsedOffset(card0))
+            {
+                continue;
+            }
+            // card 1
+            for(card1=card0+1; card1<Dealer::cCardTotalNum; card1++)
+            {
+                if (pDealer->isUsedOffset(card1))
+                {
+                    continue;
+                }
+                Card c0 = pDealer->getCardbyOffset(card0);
+                Card c1 = pDealer->getCardbyOffset(card1);
+
+                pDealer->acquireSpecialCard(c0);
+                pDealer->acquireSpecialCard(c1);
+
+                 pDealer->setPrivateCardSet(Card(Spade,  CV_2), Card(Hearts,  CV_2), c0, c1);
+                 cout<<" Versus  "<<c0<<" "<<c1<<endl;
+
+                 pDealer->listAllPublicCardCombine();
+
+                 //clear bitmap
+                pDealer->clearUsedBitmap();
+                pDealer->acquireSpecialCard(Card(Spade,  CV_2));
+                pDealer->acquireSpecialCard(Card(Hearts,  CV_2));
+            }
+        }
+       
+        delete pDealer;
+    }
+
 private:
     Player *allPlayer[cMaxPlayerCount];
     Dealer dealer;
     Card publicCards[ePublicCardNum];
     SimpleChannel channel;
 
-    int playerCount;
+    int playerCount; // how many active player in this round game
     int gameCount;  // how many games played
     int roundCount; // how many round of game played
 
@@ -513,13 +639,13 @@ private:
 
     GameStatus status; // the enum of game status, to indicate which state of the game, for example, before flop.
 
-    int nextPlayerPos(int curPos)
+    int nextPlayerPos(int curPos) const
     {
         return (curPos + 1) % this->playerCount;
     }
 
     /* check if this loop can finish */
-    bool isLoopEnd(int curPos)
+    bool isLoopEnd(int curPos) const
     {
         /* in pre flop,the blind pos is the last one */
         if (this->status == GS_preFlop)
@@ -549,7 +675,7 @@ private:
         }
         cout << endl;
     }
-    void displayPlayerCard()
+    void displayPlayerCard() const
     {
         cout << "The Player card :\n";
         for (int i = 0; i < this->playerCount; i++)
@@ -571,8 +697,6 @@ private:
         /* Value same, only the color is different, don't need to judge, because always equal power */
         if ((cards[0].value == cards[1].value) && (cards[0].value == cards[2].value) && (cards[0].value == cards[3].value))
         {
-            pDealer->setPrivateCardSet(cards[0], cards[1], cards[2], cards[3]);
-
             cout<<"\n\ncombination : "<<cards[0]<<cards[1] << " VS    "<< cards[2] << cards[3] <<endl;
             cout<<"Ratio is "<<0<<" ; "<<1 <<" ; "<<0<<endl;
 

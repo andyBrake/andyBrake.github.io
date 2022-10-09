@@ -168,6 +168,8 @@ void operator++(GameStatus &con)
     con = GameStatus(++i);
 }
 
+
+
 class Server2ClientMsg
 {
 public:
@@ -202,6 +204,16 @@ public:
         }
 
         return false;
+    }
+
+    void fillMsg(char msg[], int action, int bet)
+    {
+        // Option : Blind, Check, Bet
+        const char * msgFormat = "Option:%s;\nRequireBet:%u;\nBehind:%u;\n";
+
+        sprintf(msg, msgFormat, (0 == action)?"Blind":"None", bet, 0);
+
+        return;
     }
 };
 
@@ -243,6 +255,15 @@ public:
             return true;
         }
         return false;
+    }
+
+    // Action : Fold, Check, Call, Raise, Allin
+    void fillMsg(char msg[], int action, int bet, int remindBet)
+    {
+        const char *msgFormat = "Action:%s;\nBet:%u;\nRemindBet:%u;\n";
+
+        sprintf(msg, msgFormat, (0 == action)?"Fold":"None", bet, remindBet);
+        
     }
 };
 
