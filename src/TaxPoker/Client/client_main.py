@@ -35,8 +35,8 @@ class Client:
         self.state = ClientState.cINIT
         self.player = ClientPlayer.Player("Fa")
         self.event = threading.Event()
- 
- 
+
+
     def start(self):
         self.sock.connect(self.addr)
         self.state = ClientState.cCONNECTED # already connect
@@ -55,7 +55,7 @@ class Client:
             try:
                 data = self.sock.recv(1024) #阻塞
             except Exception as e:
-                print("!!!!!Rcv Abnormal!!!!")
+                print("!!!!!Rcv Abnormal!!!! |%s|"%data)
                 logging.info(e) #有任何异常保证退出
                 break
 
@@ -89,6 +89,7 @@ class Client:
         elif self.state == ClientState.cPLAYING_SYNC:
             print("Client Receive Acquire, in Playing state\n")
             request.display()
+            self._playerAction(request)
         return
 
     def _response2server(self):
@@ -112,13 +113,47 @@ class Client:
             self.send(rsp.toString())
         # Playing 
         elif self.state == ClientState.cPLAYING_SYNC:
-            rsp = Common.Response()
-            rsp.setActionType(self.player.id, action=Common.PlayerAction.cPLAYER_FOLD, bet=0)
+            rsp = self._decideAction()
             self.send(rsp.toString())
+            print("Resp Msg:")
             print(rsp.toString())
         else:
             print("Should not here")
         return
+
+    # This request must be a cMSG_ACQ_ACTION type, and include these below information
+    #{
+    #    Type : 2
+    #    Player ID: 1
+    #    Option:0         # 0 Blind, 1 Bet
+    #    Bet:5            # 表示最低需要支付的筹码值
+    #    Behind: 7        # 表示在你之后，还有多少位Player决策。例如Blind消息，Behind则为0，因为只需要一个Player支付盲注
+    #    Bonus: 100       # 表示当前底池总共有多少价值
+    #}
+    ####################################################################################
+    def _playerAction(self, request:Common.Request):
+        if request.type != Common.MsgType.cMSG_ACQ_ACTION:
+            print("Invalid type! %u"%request.type)
+            return
+        # Acquire Blind bet, must pay
+        if request.option == 0:
+            self.player.isBlind = True
+            self.player.pay_bet = request.bet
+        # Acquire normal bet
+        else:
+            self.player.pay_bet = request.bet
+            print("Player require bet %u"%request.bet)
+            #request.behind:int = 
+            #request.bonus:int = 
+        pass
+
+    def _decideAction(self):
+        rsp = Common.Response()
+                    
+        rsp.setActionType(self.player.id, action=Common.PlayerAction.cPLAYER_CALL, bet=self.player.pay_bet)
+        self.player.total_bet = self.player.total_bet - self.player.pay_bet
+        
+        return rsp
 
     def send(self,msg:str):
         data = "{}\n".format(msg.strip()).encode()

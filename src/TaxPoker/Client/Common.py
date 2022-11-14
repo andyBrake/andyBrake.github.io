@@ -67,7 +67,7 @@ class Request:
             self.behind:int = int(req[4].strip('\n').strip().split(':')[1])
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
         else:
-            pass
+            print("Invalid Request Type"%self.type)
         
 
     def display(self):

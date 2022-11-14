@@ -183,6 +183,7 @@ public:
     virtual int acquirePlayerBlind(int blindBet)
     {
         this->blindBet = blindBet;
+
         return 0;
     }
 
@@ -190,6 +191,8 @@ public:
     {
         bet = this->blindBet;
         this->totalBet -= bet;
+
+        cout<<"Robot Player pay the Blind Bet : "<<blindBet<<", Remind Total Bet: "<<this->totalBet<<endl;
 
         return 0;
     }
@@ -204,12 +207,15 @@ public:
             this->response.isAllIn = false;
             this->response.bet = 0;
         }
+        #if 0
         else if (2 != getId())
         {
             this->response.isFold = true;
             this->response.isAllIn = false;
             this->response.bet = 0;
         }
+        #endif
+        /* the robot just bet the necessary bet */
         else
         {
             this->response.isFold = false;
@@ -310,11 +316,12 @@ public:
         this->blindBet = blindBet;
 
         memset(msg, 0, sizeof(msg));
+        // when acquire blind, the bonus pool must be zero
         request.fillActionMsg(msg, this->id, 
                                     0, // Blind option
                                     blindBet, // bet
                                     0, // behind player count, useless now
-                                    100 // bonus
+                                    0 // bonus
                                     );
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
@@ -329,7 +336,7 @@ public:
         bet = this->blindBet;
         this->totalBet -= bet;
 
-        int loop = 2;
+        int loop = 1;
 
         do
         {
@@ -338,7 +345,7 @@ public:
 
             cout<<"Rcv Reponse:{\n"<<msg<<"}"<<endl;
             sleep(3);
-        }while(loop--);
+        }while(--loop > 0);
         
         return 0;
     }

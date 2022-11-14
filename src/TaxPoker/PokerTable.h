@@ -145,6 +145,62 @@ public:
         return;
     }
 
+    int calculateWinner()
+    {
+        int allPower[cMaxPlayerCount];
+        int winnerId = -1;
+        int maxPower = 0;
+        
+        for (int i = 0; i < cMaxPlayerCount; i++)
+        {
+            Card cardSet[7];
+            CardPower cardPower;
+            int power = 0;
+
+            if (allPlayer[i] == NULL || allPlayer[i]->isFold())
+            {
+                allPower[i] = 0;
+
+                cout << "  Don't check Player " << i <<endl;
+                continue;
+            }
+
+            for (int index = 0; index < (int)ePublicCardNum; index++)
+            {
+                cardSet[index] = this->publicCards[index];
+            }
+
+            this->allPlayer[i]->getCard(cardSet[ePublicCardNum], cardSet[ePublicCardNum + 1]);
+
+            Ruler::sortCardSet(cardSet);
+
+            cout << "Player " << i << " After Sort\n";
+            for (int j = 0; j < 7; j++)
+            {
+                cout << cardSet[j] << endl;
+            }
+            cout << endl;
+
+            power = Ruler::calCardSetPower(cardSet, eCardSetNum);
+
+            allPower[i] = power;
+        }
+
+        cout << endl;
+        for (int i = 0; i < cMaxPlayerCount; i++)
+        {
+            if (allPower[i] > maxPower)
+            {
+                maxPower = allPower[i];
+                winnerId = i;
+            }
+            
+            cout << "Player " << i << " power is " << allPower[i] << endl;
+        }
+
+        return winnerId;
+    }
+
     /* start a match, return if generate winner */
     void startGame()
     {
@@ -190,7 +246,6 @@ public:
         assert(this->stayPlayerCount > 0);
         if (this->stayPlayerCount == 1)
         {
-            cout<<"This round finish!\n";
             moveBouns();
             return;
         }
@@ -205,7 +260,7 @@ public:
             isFinish = processRound();
             if (isFinish)
             {
-                cout << "Already has Winner!!!" << endl;
+                moveBouns();
                 return;
             }
         }
@@ -217,47 +272,8 @@ public:
         displayPublicCard();
         displayPlayerCard();
 
-        int allPower[8];
-        for (int i = 0; i < playerCount; i++)
-        {
-            Card cardSet[7];
-            CardPower cardPower;
-            int power = 0;
-
-            if (allPlayer[i]->isFold())
-            {
-                allPower[i] = 0;
-
-                cout << "  Don't check Player " << i << " due to Fold\n";
-                continue;
-            }
-
-            for (int index = 0; index < (int)ePublicCardNum; index++)
-            {
-                cardSet[index] = this->publicCards[index];
-            }
-
-            this->allPlayer[i]->getCard(cardSet[ePublicCardNum], cardSet[ePublicCardNum + 1]);
-
-            Ruler::sortCardSet(cardSet);
-
-            cout << "Player " << i << " After Sort\n";
-            for (int j = 0; j < 7; j++)
-            {
-                cout << cardSet[j] << endl;
-            }
-            cout << endl;
-
-            power = Ruler::calCardSetPower(cardSet, eCardSetNum);
-
-            allPower[i] = power;
-        }
-
-        cout << endl;
-        for (int i = 0; i < 8; i++)
-        {
-            cout << "Player " << i << " power is " << allPower[i] << endl;
-        }
+        int winnerId = calculateWinner();
+        moveBouns(winnerId);
 
         // TODO :
         return;
@@ -338,7 +354,6 @@ public:
         assert(this->stayPlayerCount > 0);
         if (this->stayPlayerCount == 1)
         {
-            moveBouns();
             return true;
         }
 
@@ -435,6 +450,35 @@ public:
     // give bonus to winner
     void moveBouns()
     {
+        int winnerCnt = 0;
+        int winnerID = 0;
+        
+        cout << "Already has Winner!!!" << endl;
+        
+        for (int i = 0; i < playerCount; i++)
+        {
+            if (!allPlayer[i]->isFold())
+            {
+                winnerCnt++;
+                winnerID = i;
+            }
+        }
+        assert(1 == winnerCnt);
+        cout<<"Winner Player ID : "<<winnerID<<", bouns : "<<bounsPool<<endl;
+
+
+        ////:TODO  to add the player total bet
+
+        return;
+    }
+
+    void moveBouns(int winnerId)
+    {
+        cout<<"Move to Winner Player ID : "<<winnerId<<", bouns : "<<bounsPool<<endl;
+
+
+        ////:TODO  to add the player total bet
+        return;
     }
 
     int acquirePlayerBlind(Player *pPlayer, int blindBet)
