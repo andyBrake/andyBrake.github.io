@@ -3,6 +3,7 @@
 
 #TCP Client客户端 封装成类
 import socket,threading,logging,datetime
+from enum import IntEnum, unique
 import Common
 import ClientPlayer
 from time import sleep
@@ -11,20 +12,34 @@ from time import sleep
 DATEFMT="%H:%M:%S"
 FORMAT = "[%(asctime)s]\t [%(threadName)s,%(thread)d] %(message)s"
 logging.basicConfig(level=logging.INFO,format=FORMAT,datefmt=DATEFMT)
- 
+
+
+@unique
+class ClientState(IntEnum):
+    cINIT = 0 # initial statue
+    cCONNECTED = 1 # To try to connect with Server, assign a Player ID
+
+    cWAIT_PLAYER_ID = 2 # Sync the status to 1 ready
+    cRESP_PLAYER_ID = 3 # acquire and response player action
+
+    cWAIT_START_STATUS = 4
+    cRESP_START_STATUS = 5
+
+    cPLAYING_SYNC = 6
+    
 
 class Client:
     def __init__(self,ip='127.0.0.1',port=10002):
         self.sock = socket.socket()
         self.addr = (ip,port)
-        self.state = 0
+        self.state = ClientState.cINIT
         self.player = ClientPlayer.Player("Fa")
         self.event = threading.Event()
  
  
     def start(self):
         self.sock.connect(self.addr)
-        self.state = 1 # already connect
+        self.state = ClientState.cCONNECTED # already connect
         # 准备接收数据，recv是阻塞的，启动新的线程
         threading.Thread(target=self._recv,name='recv').start()
         sleep(1)
@@ -40,6 +55,7 @@ class Client:
             try:
                 data = self.sock.recv(1024) #阻塞
             except Exception as e:
+                print("!!!!!Rcv Abnormal!!!!")
                 logging.info(e) #有任何异常保证退出
                 break
 
@@ -55,48 +71,51 @@ class Client:
     # generate the response to Server
     def _process(self, request:Common.Request):
         # waiting the connect msg to confirm player ID
-        if self.state == 2:
-            if request.type == 0:
+        if self.state == ClientState.cWAIT_PLAYER_ID: 
+            if request.type == Common.MsgType.cMSG_ASSIGN_ID:
                 self.player.id = request.id
-                self.state = 3
+                self.state = ClientState.cRESP_PLAYER_ID
                 print("Get the Player ID %u from Server"%request.id)
             else:
                 print("Invalid state or msg!")
                 return
-        elif self.state == 4:
-            if request.type == 1:
+        elif self.state == ClientState.cWAIT_START_STATUS:
+            if request.type == Common.MsgType.cMSG_SYNC_STATUS:
                 print("Get the Start Status %u from Server"%request.status)
-                self.state = 5
+                self.state = ClientState.cRESP_START_STATUS
             else:
                 print("Invalid state or msg!")
                 return
-        elif self.state == 6:
-            print("Client in Playing state\n")
+        elif self.state == ClientState.cPLAYING_SYNC:
+            print("Client Receive Acquire, in Playing state\n")
+            request.display()
         return
 
     def _response2server(self):
         # In connect state, need to confirm with Server
-        if self.state == 1:
+        if self.state == ClientState.cCONNECTED:
             rsp = Common.Response()
             rsp.setConnectType("Fa")
             self.send(rsp.toString())
-            self.state =2
+            self.state =ClientState.cWAIT_PLAYER_ID
         # Rcv the Player ID from Server, send the Ready to Server
-        elif self.state == 3: 
+        elif self.state == ClientState.cRESP_PLAYER_ID: 
             rsp = Common.Response()
             rsp.setStatusType(self.player.id, 0)
             self.send(rsp.toString())
-            self.state = 4
+            self.state = ClientState.cWAIT_START_STATUS
         # Confirm start 
-        elif self.state == 5:
+        elif self.state == ClientState.cRESP_START_STATUS:
             rsp = Common.Response()
             rsp.setStatusType(self.player.id, 1)
-            self.state = 6
+            self.state = ClientState.cPLAYING_SYNC
             self.send(rsp.toString())
         # Playing 
-        elif self.state == 6:
-            self.send("Client Playing Response")
-            pass
+        elif self.state == ClientState.cPLAYING_SYNC:
+            rsp = Common.Response()
+            rsp.setActionType(self.player.id, action=Common.PlayerAction.cPLAYER_FOLD, bet=0)
+            self.send(rsp.toString())
+            print(rsp.toString())
         else:
             print("Should not here")
         return

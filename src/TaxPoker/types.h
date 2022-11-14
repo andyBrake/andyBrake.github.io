@@ -133,6 +133,28 @@ enum CardLevel
     TotalLevelCount = 9        
 };
 
+// Action : Fold, Check, Call, Raise, Allin
+enum PlayerAction
+{
+    cPLAYER_FOLD     = 0,
+    cPLAYER_CHECK   = 1,
+    cPLAYER_CALL      = 2,
+    cPLAYER_RAISE    = 3,
+    cPLAYER_ALLIN    = 4,
+
+    cPLAYER_INV        = 10
+};
+
+
+enum MsgType
+{
+    cMSG_ASSIGN_ID       = 0,     // To try to connect with Server, assign a Player ID
+    cMSG_SYNC_STATUS = 1,     // Sync the status to 1 ready
+    cMSG_ACQ_ACTION   = 2,     // acquire and response player action
+    cMSG_INV                    = 10
+
+};
+
 enum GameStatus
 {
     GS_Init = 0,
@@ -167,8 +189,6 @@ void operator++(GameStatus &con)
     int i = (int)con;
     con = GameStatus(++i);
 }
-
-
 
 class Server2ClientMsg
 {
@@ -207,7 +227,7 @@ public:
     }
 /*
 {
-    Type : 0
+    Type : 0               MsgType::cMSG_ASSIGN_ID
     Player Name: Fa
     Player ID: 1
 }
@@ -227,29 +247,30 @@ public:
     Bonus: 100       # 表示当前底池总共有多少价值
 }
 */
-    void fillMsg(char msg[], char name[], int id)
+    void fillAssignMsg(char msg[], char name[], int id)
     {
         const char * type0format = "Type:%u;\nPlayer Name:%s;\nPlayer ID:%u\n";
 
-        sprintf(msg, type0format, 0, name, id);
+        sprintf(msg, type0format, MsgType::cMSG_ASSIGN_ID, name, id);
 
         return;
     }
 
-    void fillMsg(char msg[], int id, int status)
+    /* status : 1 means Ready, 0 means Wait */
+    void fillSyncMsg(char msg[], int id, int status)
     {
         const char * type1format = "Type:%u;\nPlayer ID:%u;\nStatus:%u\n";
 
-        sprintf(msg, type1format, 1, id, status);
+        sprintf(msg, type1format, MsgType::cMSG_SYNC_STATUS, id, status);
 
         return;
     }
 
-    void fillMsg(char msg[], int id, int option, int bet, int behind, int bonus)
+    void fillActionMsg(char msg[], int id, int option, int bet, int behind, int bonus)
     {
         const char * type2format = "Type:%u;\nPlayer ID:%u;\nOption:%u;\nBet:%u;\nBehind:%u;\nBonus:%u\n";
 
-        sprintf(msg, type2format, 2, id, option, bet, behind, bonus);
+        sprintf(msg, type2format, MsgType::cMSG_ACQ_ACTION, id, option, bet, behind, bonus);
 
         return;
     }
@@ -296,7 +317,7 @@ public:
     }
 
     // Action : Fold, Check, Call, Raise, Allin
-    void fillMsg(char msg[], int action, int bet, int remindBet)
+    void fillActionMsg(char msg[], int action, int bet, int remindBet)
     {
         const char *msgFormat = "Action:%s;\nBet:%u;\nRemindBet:%u;\n";
 

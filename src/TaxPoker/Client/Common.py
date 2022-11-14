@@ -1,3 +1,24 @@
+from enum import IntEnum, unique
+
+
+
+@unique
+class MsgType(IntEnum):
+    cMSG_ASSIGN_ID = 0 # To try to connect with Server, assign a Player ID
+    cMSG_SYNC_STATUS = 1 # Sync the status to 1 ready
+    cMSG_ACQ_ACTION = 2 # acquire and response player action
+    cMSG_INV        = 10
+
+@unique
+class PlayerAction(IntEnum):
+    cPLAYER_FOLD  = 0
+    cPLAYER_CHECK = 1
+    cPLAYER_CALL  = 2
+    cPLAYER_RAISE = 3
+    cPLAYER_ALLIN = 4
+    cPLAYER_INV   = 10
+
+
 #####################################################################
 # The Request message came from Server, send to Client
 # Format is "Option:%s;\nRequireBet:%u;\nBehind:%u;\n"
@@ -33,13 +54,13 @@ class Request:
         else:
             print("Invalid Request Info parameter")
 
-        if self.type == 0:
+        if self.type == MsgType.cMSG_ASSIGN_ID :
             self.name:str = req[1].strip('\n').strip().split(':')[1]
             self.id:int = int(req[2].strip('\n').strip().split(':')[1])
-        elif self.type == 1:
+        elif self.type == MsgType.cMSG_SYNC_STATUS:
             self.id = int(req[1].strip('\n').strip().split(':')[1])
             self.status:int = int(req[2].strip('\n').strip().split(':')[1])
-        elif self.type == 2:
+        elif self.type == MsgType.cMSG_ACQ_ACTION:
             self.id:int = int(req[1].strip('\n').strip().split(':')[1])
             self.option:int = int(req[2].strip('\n').strip().split(':')[1])
             self.bet:int = int(req[3].strip('\n').strip().split(':')[1])
@@ -47,7 +68,19 @@ class Request:
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
         else:
             pass
-        #print("Request type:%u, id:%u, "%(self.type, self.id))
+        
+
+    def display(self):
+        print("Request type:%u"%(self.type))
+        if (MsgType.cMSG_ASSIGN_ID == self.type):
+            print("Name:%s, ID:%u"%(self.name, self.id))
+        elif (MsgType.cMSG_SYNC_STATUS == self.type):
+            print("ID: %u, Status:%u"%(self.id, self.status))
+        elif (MsgType.cMSG_ACQ_ACTION == self.type):
+            print("ID:%u, Option:%u, Bet:%u, Behind:%u, Bonus:%u"
+                %(self.id, self.option, self.bet, self.behind, self.bonus))
+
+
 
 
 #####################################################################
@@ -76,7 +109,7 @@ class Request:
 #####################################################################
 class Response:
     def __init__(self):
-        self.type:int = 0
+        self.type:int = MsgType.cMSG_INV
         self.name:str = None
         self.PlayerId:int = 0
         self.status:int = 0
@@ -84,18 +117,18 @@ class Response:
         self.bet:int = 0
 
     def setConnectType(self, playerName:str):
-        self.type = 0
+        self.type = MsgType.cMSG_ASSIGN_ID
         self.name = playerName
         return
 
     def setStatusType(self, id:int, status:int):
-        self.type = 1
+        self.type = MsgType.cMSG_SYNC_STATUS
         self.PlayerId = id
         self.status = status
         return
 
     def setActionType(self, id:int, action:int, bet:int):
-        self.type = 2
+        self.type = MsgType.cMSG_ACQ_ACTION
         self.PlayerId = id
         self.action = action
         self.bet = bet
@@ -107,11 +140,11 @@ class Response:
         type2format = "Type : {type};\nPlayer ID: {id};\nAction:{action};\nBet:{bet}\n"
         message:str = None
 
-        if self.type == 0:
+        if self.type == MsgType.cMSG_ASSIGN_ID:
             message = type0format.format(type=0, name=self.name)
-        elif self.type == 1:
+        elif self.type == MsgType.cMSG_SYNC_STATUS:
             message = type1format.format(type=1, id=self.PlayerId, status=self.status)
-        elif self.type == 2:
+        elif self.type == MsgType.cMSG_ACQ_ACTION:
             message = type2format.format(type=2, id=self.PlayerId, action=self.action, bet=self.bet)
         else:
             message = "Invalid Type!!!!"

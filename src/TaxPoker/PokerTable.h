@@ -81,7 +81,7 @@ public:
         return isActive ? activeCnt : totalCnt;
     }
 
-    /* Add a Local Player */
+    /* Add a Robot Player */
     int addPlayer(void)
     {
         int playerId = -1;
@@ -442,24 +442,17 @@ public:
         int ret = 0;
 
         ret = pPlayer->acquirePlayerBlind(blindBet);
-#if 0
-        Server2ClientMsg msg;
 
-        msg.playerId = player.getId();
-        msg.isBlind = true;
-        msg.curBet = blindBet;
-        msg.behindPlayerCount = this->playerCount;
-        msg.bonusPool = this->bounsPool;
-        //ret = channel.send2Player(msg.playerId, msg);
-#endif
         return ret;
     }
 
     int waitPlayerPayBlind(Player *pPlayer, int &bet)
     {
-        pPlayer->waitPlayerPayBlind(bet);
+        int ret = 0;
+        
+        ret = pPlayer->waitPlayerPayBlind(bet);
 
-        return 0;
+        return ret;
     }
 
     int acquirePlayerAction(Player &player, int currentLoopBet, int currentBounsPool, int behindPlayerCount)

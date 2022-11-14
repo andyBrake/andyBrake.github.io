@@ -267,7 +267,7 @@ public:
     void notifyPlayerId()
     {
         memset(msg, 0, sizeof(msg));
-        request.fillMsg(msg, this->name, this->id);
+        request.fillAssignMsg(msg, this->name, this->id);
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
@@ -288,7 +288,7 @@ public:
         Player::active();
         /* Notify the Remote Player Start Game */
         memset(msg, 0, sizeof(msg));
-        request.fillMsg(msg, this->id, 1);
+        request.fillSyncMsg(msg, this->id, 1);
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
@@ -310,7 +310,7 @@ public:
         this->blindBet = blindBet;
 
         memset(msg, 0, sizeof(msg));
-        request.fillMsg(msg, this->id, 
+        request.fillActionMsg(msg, this->id, 
                                     0, // Blind option
                                     blindBet, // bet
                                     0, // behind player count, useless now
