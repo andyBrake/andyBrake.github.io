@@ -66,6 +66,7 @@ class Request:
             self.bet:int = int(req[3].strip('\n').strip().split(':')[1])
             self.behind:int = int(req[4].strip('\n').strip().split(':')[1])
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
+            self.status:int = int(req[6].strip('\n').strip().split(':')[1])
         else:
             print("Invalid Request Type"%self.type)
         
@@ -77,8 +78,8 @@ class Request:
         elif (MsgType.cMSG_SYNC_STATUS == self.type):
             print("ID: %u, Status:%u"%(self.id, self.status))
         elif (MsgType.cMSG_ACQ_ACTION == self.type):
-            print("ID:%u, Option:%u, Bet:%u, Behind:%u, Bonus:%u"
-                %(self.id, self.option, self.bet, self.behind, self.bonus))
+            print("ID:%u, Option:%u, Bet:%u, Behind:%u, Bonus:%u, Status:%u"
+                %(self.id, self.option, self.bet, self.behind, self.bonus, self.status))
 
 
 

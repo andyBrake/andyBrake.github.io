@@ -1,0 +1,29 @@
+@@startuml
+autonumber
+
+participant Client
+participant Server
+
+Client -> Server: Init
+note right:Connect
+
+Client -> Server: Type 0 Msg, name XXX
+note right:Accept
+
+Server -> Server:Create Player Object, assign Player ID
+Server -> Client: Type 0 Msg, name XXX, ID XX
+
+Client -> Server:Type 1 Msg, Send Ready
+note left: ID:X Status:0
+Server -> Server:Wait for next game start
+
+Server -> Client:Type 1 Msg, Send Start
+note left: ID:X Status:1
+Client -> Server:confirm Status
+
+loop Sync-up game information and player action
+    Server -> Client: Acquire
+    Client -> Server: Response
+end
+
+@@enduml

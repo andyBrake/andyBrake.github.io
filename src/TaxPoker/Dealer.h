@@ -118,7 +118,7 @@ class Dealer
 
         splited += splitCount;
 
-        cout<<"Start to split "<<splitCount<<" Card, total splited "<<splited<<" Cards" << endl;
+        //cout<<"Start to split "<<splitCount<<" Card, total splited "<<splited<<" Cards" << endl;
 
         while (splitCount > 0)
         {

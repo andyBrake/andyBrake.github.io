@@ -117,8 +117,8 @@ private:
             bRet = funcArray[i](cardSet, cardPower);
             if (bRet)
             {
-                //cout << "Confirm Level " << levelName[i] << endl;
-                //Ruler::showCardPowerInfo(cardPower);
+                cout << "Confirm Level " << levelName[i] << endl;
+                Ruler::showCardPowerInfo(cardPower);
 
                 return;
             }
@@ -127,11 +127,11 @@ private:
     
 public:
     static const int cLevelCount = TotalLevelCount;
-    static const int cLevelWeight = 100000;
-    static const int cKey1Weight = 10000;
-    static const int cKey2Weight = 1000;
-    static const int cKey3Weight = 100;
-    static const int cKey4Weight = 10;
+    static const int cLevelWeight = 1000000;  // Level Weight must be much bigger
+    static const int cKey1Weight = 20000;
+    static const int cKey2Weight = 2000;
+    static const int cKey3Weight = 200;
+    static const int cKey4Weight = 20;
     static const int cMaxCardNum = (int)eCardSetNum;
     static const int cStraightLength = 5;
 

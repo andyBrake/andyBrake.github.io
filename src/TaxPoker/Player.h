@@ -40,6 +40,7 @@ public:
         this->totalBet = 500;
         this->isAllIn = false;
         this->status = PS_Waiting;
+        this->currentPayBet = 0;
 
         return;
     }
@@ -82,6 +83,16 @@ public:
     virtual void active()
     {
         this->status = PS_Playing;
+    }
+
+    virtual void setPayBet(int currentPayBet)
+    {
+        this->currentPayBet = currentPayBet;
+    }
+
+    virtual int getPayBet()
+    {
+        return this->currentPayBet;
     }
 
     void fold()
@@ -137,7 +148,7 @@ public:
         return 0;
     }
 
-    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount)
+    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount, GameStatus status)
     {
         cout<<"Default Player acquire action"<<endl;
     }
@@ -155,6 +166,8 @@ protected:
     char name[cMaxNameLen];
     PlayerType type;
     PlayerStatus status;
+    int blindBet;
+    int currentPayBet; // already pay bet in this loop
     bool isBlind;
     bool isStay;
     int totalBet;
@@ -169,10 +182,7 @@ public:
         init(id);
         this->type = RobotPlayerType;
         
-        this->response.PlayerId = getId();
-        this->response.isFold = isFold();
-        this->response.isAllIn = isAllin();
-        this->response.bet = 0;
+        this->response.Init();
         this->blindBet = 0;
     }
 
@@ -198,14 +208,15 @@ public:
     }
 
 
-    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount)
+    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount, GameStatus status)
     {
         // Blind Player just call
         if (this->isBlind)
         {
             this->response.isFold = false;
             this->response.isAllIn = false;
-            this->response.bet = 0;
+            
+            this->response.setBet(currentLoopBet);
         }
         #if 0
         else if (2 != getId())
@@ -220,7 +231,10 @@ public:
         {
             this->response.isFold = false;
             this->response.isAllIn = false;
-            this->response.bet = currentLoopBet;
+            /* Robot try to raise */
+            currentLoopBet = (currentLoopBet < 10) ? 10 : currentLoopBet;
+            
+            this->response.setBet(currentLoopBet);
         }
     }
 
@@ -228,30 +242,31 @@ public:
     {
         isFold = this->response.isFold;
         isAllin = this->response.isAllIn;
-        bet = this->response.bet;
+        bet = this->response.getBet();
+
+        this->currentPayBet = bet;
 
         return;
     }
 
 private:
     Client2ServerMsg response;
-    int blindBet;
 };
 
 
 class RemotePlayer : public Player
 {
 public:
+    const int cRemoteTimeOut = 3; // remote player assume 3s time out
+
     RemotePlayer(int id)
     {
         init(id);
 
         this->type = RemotePlayerType;
 
-        this->response.PlayerId = getId();
-        this->response.isFold = isFold();
-        this->response.isAllIn = isAllin();
-        this->response.bet = 0;
+        this->response.Init();
+
         this->blindBet = 0;
         this->playerSockId = -1;
     }
@@ -294,7 +309,7 @@ public:
         Player::active();
         /* Notify the Remote Player Start Game */
         memset(msg, 0, sizeof(msg));
-        request.fillSyncMsg(msg, this->id, 1);
+        request.fillSyncMsg(msg, this->id, ClientStatus::cSTATUS_READY);
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
@@ -309,6 +324,9 @@ public:
 
             cout<<"Confirm Start, Rcv Reponse:{\n"<<msg<<"}"<<endl;
         }while(0);
+
+        cout<<endl;
+        return;
     }
 
     virtual int acquirePlayerBlind(int blindBet)
@@ -321,7 +339,8 @@ public:
                                     0, // Blind option
                                     blindBet, // bet
                                     0, // behind player count, useless now
-                                    0 // bonus
+                                    0, // bonus
+                                    GS_Init // 设置盲注
                                     );
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
@@ -333,34 +352,93 @@ public:
 
     virtual int waitPlayerPayBlind(int &bet)
     {
-        bet = this->blindBet;
-        this->totalBet -= bet;
-
-        int loop = 1;
+         int loop = cRemoteTimeOut;
 
         do
         {
+            sleep(1);
+            
             memset(msg, 0, sizeof(msg));
-            recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
-
-            cout<<"Rcv Reponse:{\n"<<msg<<"}"<<endl;
-            sleep(3);
+            int len = recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
+            if (len > 0)
+            {
+                cout<<"Rcv Blind Reponse:{\n"<<msg<<"}"<<endl;
+                cout<<endl;
+                break;
+            }
         }while(--loop > 0);
+
+        if (loop <= 0)
+        {
+            cout<<"Doesn't rcv Response!!!!"<<endl;
+            
+            bet = 0;
+            return -1;
+        }
+
+        this->response.Analysis(msg);
+
+        if (this->blindBet != this->response.getBet())
+        {
+            cout<<"Blind Resp Error, set blind bet is "<<this->blindBet <<" , rec blind bet is "<<this->response.getBet()<<endl;
+        }
+        
+        bet = this->response.getBet();
+        this->totalBet -= bet;
         
         return 0;
     }
 
 
-    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount)
+    virtual void acquireAction(int currentLoopBet, int currentBounsPool, int behindPlayerCount, GameStatus status)
     {
+        memset(msg, 0, sizeof(msg));
+        
+        request.fillActionMsg(msg, this->id, 
+                                    1, // 1 means Bet
+                                    currentLoopBet, // bet
+                                    behindPlayerCount, // behind player count, useless now
+                                    currentBounsPool, // bonus
+                                    status
+                                    );
+
+        send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
+
+        cout<<"Acquire Bet Action Send Request:{\n"<<msg<<"}"<<endl;
 
     }
 
     virtual void getAction(bool &isFold, bool &isAllin, int &bet)
     {
+        int loop = cRemoteTimeOut * 10;
+        int len = 0;
+
+        do
+        {
+            sleep(1);
+            
+            memset(msg, 0, sizeof(msg));
+            len = recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
+            if (len > 0)
+            {
+                cout<<"Rcv Action Reponse:{\n"<<msg<<"}"<<endl;
+                cout<<endl;
+                break;
+            }
+
+            cout<<"Rcv Reponse is Empty"<<endl;
+        }while(--loop > 0);
+
+        this->response.Analysis(msg);
+
         isFold = this->response.isFold;
-        isAllin = this->response.isAllIn;
-        bet = this->response.bet;
+        isAllIn = this->response.isAllIn;
+        bet = this->response.getBet();
+        /* Update Player status */
+        this->isStay = !isFold;
+        this->isAllIn = isAllIn;
+        this->totalBet -= bet;
+        this->currentPayBet += bet;
 
         return;
     }
@@ -370,7 +448,6 @@ private:
     Server2ClientMsg request;
     Client2ServerMsg response;
     int playerSockId;
-    int blindBet;
 };
 
 #endif

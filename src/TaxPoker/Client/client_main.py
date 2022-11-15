@@ -115,8 +115,9 @@ class Client:
         elif self.state == ClientState.cPLAYING_SYNC:
             rsp = self._decideAction()
             self.send(rsp.toString())
-            print("Resp Msg:")
+            print("\nResp Msg:")
             print(rsp.toString())
+            print("\n")
         else:
             print("Should not here")
         return
@@ -129,6 +130,7 @@ class Client:
     #    Bet:5            # 表示最低需要支付的筹码值
     #    Behind: 7        # 表示在你之后，还有多少位Player决策。例如Blind消息，Behind则为0，因为只需要一个Player支付盲注
     #    Bonus: 100       # 表示当前底池总共有多少价值
+    #    Status: GS       # 当前游戏步骤  
     #}
     ####################################################################################
     def _playerAction(self, request:Common.Request):
@@ -175,7 +177,7 @@ def main():
     cc = Client()
     cc.start()
  
-    loop = 10
+    loop = 20
     while True:
         #msg = input(">> ")
         loop = loop - 1

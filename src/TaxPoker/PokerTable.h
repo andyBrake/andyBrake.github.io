@@ -182,8 +182,21 @@ public:
             cout << endl;
 
             power = Ruler::calCardSetPower(cardSet, eCardSetNum);
-
             allPower[i] = power;
+            
+#if 0
+            {
+                cout<<"--------------For Debug-------------------------"<<endl;
+                Card cardSet0[7] = {{Spade, CV_K}, {Diamond, CV_10}, {Hearts, CV_7}, {Hearts, CV_4}, {Spade, CV_4},      {Club, CV_3},    {Diamond, CV_2}};
+                Card cardSet1[7] = {{Spade, CV_A}, {Spade, CV_K}, {Diamond, CV_10}, {Hearts, CV_7}, {Diamond, CV_5}, {Hearts, CV_4}, {Diamond, CV_2}};;
+                
+                int _power0 = Ruler::calCardSetPower(cardSet0, eCardSetNum);
+
+                int _power1 = Ruler::calCardSetPower(cardSet1, eCardSetNum);
+
+                cout<<"Power 0 "<<_power0<<" , Power 1 "<<_power1<<endl;
+            }
+#endif
         }
 
         cout << endl;
@@ -199,6 +212,18 @@ public:
         }
 
         return winnerId;
+    }
+
+    void initPlayerRoundInfo()
+    {
+         for (int i = 0; i < cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] != NULL)
+            {
+                allPlayer[i]->setPayBet(0);
+            }
+        }
+        return;
     }
 
     /* start a match, return if generate winner */
@@ -232,16 +257,14 @@ public:
 
         bounsPool += currentLoopBet;
 
-        cout << "The Blind Bet is " << currentLoopBet << " , the bonus pool is " << bounsPool << endl;
-
+        /* to deal all player private cards */
         dealPrivateCards(sbPos);
 
         /* start to Pre Flop */
         this->status = GS_preFlop;
         betLoop(sbPos);
 
-        cout << "Pre Flop finish, alive " << this->stayPlayerCount << " Player\n\n";
-        cout << "The bonus pool is " << bounsPool << endl;
+        cout << "Pre Flop finish, alive " << this->stayPlayerCount << " Player, the bonus pool is "<<bounsPool<<"\n\n";
 
         assert(this->stayPlayerCount > 0);
         if (this->stayPlayerCount == 1)
@@ -257,6 +280,8 @@ public:
             cout << "===Start to process " << strOfStatus[(int)this->status] << ", " << this->status << " ...." << endl;
             cout << "\tStill have " << this->stayPlayerCount << " Player alive" << endl;
 
+            initPlayerRoundInfo();
+
             isFinish = processRound();
             if (isFinish)
             {
@@ -266,7 +291,7 @@ public:
         }
 
         /* start to check winner */
-        cout << "The status " << strOfStatus[(int)this->status] << ", " << this->status << endl;
+        cout << "The status " << strOfStatus[(int)this->status] << endl;
         cout << "Must check private cards to determine Winenr \n";
 
         displayPublicCard();
@@ -284,15 +309,22 @@ public:
         Card privateCard[ePrivateCardNum];
 
         dealer.splitCard(10); // TODO : only split random
+
+        cout<<"Deal all playing player private cards...."<<endl;
+        
         /* deal each player private 2 card */
         int pos = startPos;
         do
         {
             dealer.dealCard(ePrivateCardNum, privateCard);
             Player *curPlayer = allPlayer[pos];
+            if (NULL == curPlayer)
+            {
+                continue;
+            }
 
             // TODO, to send the card to player x
-            cout << "Dealer send Player " << pos << " Card: " << privateCard[0] << ", " << privateCard[1] << endl;
+            //cout << "Dealer send Player " << pos << " Card: " << privateCard[0] << ", " << privateCard[1] << endl;
             curPlayer->setCard(privateCard[0], privateCard[1]);
 
             /* shift to next player */
@@ -341,11 +373,13 @@ public:
 
         dealer.splitCard(splitCardNum);
         dealer.dealCard(dealCardNum, &this->publicCards[this->dealedCardCount]);
+        #if 0
         for (int i = 0; i < dealCardNum; i++)
         {
             cout << "Dealer deal public Card, index = " << i + this->dealedCardCount << ", "
                  << this->publicCards[this->dealedCardCount + i] << " ." << endl;
         }
+        #endif
 
         this->dealedCardCount += dealCardNum;
 
@@ -364,12 +398,12 @@ public:
     int betLoop(int endPos) // the endPos means this round should be end in which pos
     {
         int startPos = nextPlayerPos(endPos);
-        int currentLoopBet = 0;
+        int requireBet = 0;
         int currentBounsPool = this->bounsPool;
         int behindPlayerCount = this->stayPlayerCount - 1;
         int ret = 0, bet = 0;
 
-        cout << "In Bet Loop, status " << this->status << ", start pos " << startPos << ", end pos " << endPos << endl;
+        cout << "In Bet Loop, status " << strOfStatus[(int)this->status] << ", start pos " << startPos << ", end pos " << endPos << endl;
         do
         {
             bool isFold = false;
@@ -382,7 +416,7 @@ public:
             {
                 cout << "  Skip Position " << startPos << endl;
 
-                if (isLoopEnd(startPos))
+                if (isLoopEnd(startPos, endPos))
                 {
                     break;
                 }
@@ -392,19 +426,19 @@ public:
             }
 
             cout << "\n\tTo sync with Player " << curPlayer->getId() << endl;
-            /* In pre flop, the blind player don't bet again in default */
-            if (this->status == GS_preFlop && curPlayer->getBlind())
+
+            if (this->currentLoopBet >= curPlayer->getPayBet())
             {
-                currentLoopBet = 0;
-                bet = currentLoopBet;
+                requireBet = this->currentLoopBet - curPlayer->getPayBet();
             }
             else
             {
-                currentLoopBet = this->currentLoopBet;
-                bet = currentLoopBet;
+                requireBet = 0;
+                cout<<"Current Loop Bet "<<this->currentLoopBet<<", Player Pay Bet "<<curPlayer->getPayBet()<<endl;
+                assert(0);
             }
 
-            ret = acquirePlayerAction(*curPlayer, currentLoopBet, currentBounsPool, behindPlayerCount);
+            ret = acquirePlayerAction(*curPlayer, requireBet, currentBounsPool, behindPlayerCount);
 
             ret = waitPlayerAction(*curPlayer, isFold, isAllin, bet);
             assert(0 == ret);
@@ -418,19 +452,31 @@ public:
             else
             {
                 /* If anyone Raise, he must be the new end pos */
-                if (bet > currentLoopBet)
+                if (bet > requireBet)
                 {
                     isRaise = true;
-                    endPos = startPos;
-                    currentLoopBet = bet;
-                    behindPlayerCount = this->stayPlayerCount;
+                    endPos = prevPlayerPos(startPos);
+                    behindPlayerCount = this->stayPlayerCount - 1;
+                    this->currentLoopBet = bet;
+
+                    cout<<"  Player "<<curPlayer->getId()<<"  Raise to "<<this->currentLoopBet<<endl;
+                }
+                else if (bet == requireBet)
+                {
+                    cout<<"  Player "<<curPlayer->getId()<<" Pay "<<requireBet<<"  to Call "<<this->currentLoopBet<<endl;
+                }
+                else
+                {
+                    /* impossible if bet < require bet */
+                    cout<<"Bet "<<bet<<" , RequireBet "<<requireBet<<" , ERROR!!!!"<<endl;
+                    assert(0);
                 }
 
-                currentBounsPool += currentLoopBet;
+                currentBounsPool += bet;
                 behindPlayerCount--;
             }
 
-            if (isLoopEnd(startPos))
+            if (isLoopEnd(startPos, endPos))
             {
                 break;
             }
@@ -495,13 +541,19 @@ public:
         int ret = 0;
         
         ret = pPlayer->waitPlayerPayBlind(bet);
+        if (0 == ret)
+        {
+            pPlayer->setPayBet(bet);
+        }
 
         return ret;
     }
 
     int acquirePlayerAction(Player &player, int currentLoopBet, int currentBounsPool, int behindPlayerCount)
     {
-        // cout << "Player " << player.getId() << " to make decision, bet " << currentLoopBet << endl;
+        cout << "Player " << player.getId() << " to make decision, bet " << currentLoopBet <<" to Call"<< endl;
+
+        player.acquireAction(currentLoopBet, currentBounsPool, behindPlayerCount, this->status);
 
         return 0;
     }
@@ -509,7 +561,6 @@ public:
     // dead loop for waiting for player Id action
     int waitPlayerAction(Player &player, bool &isFold, bool &isAllin, int &bet)
     {
-        player.acquireAction(this->currentLoopBet, 0, 0);
         player.getAction(isFold, isAllin, bet);
 
         cout << "Player " << player.getId() << " did the action, bet " << bet << ", isFold " << isFold << endl;
@@ -678,6 +729,11 @@ private:
 
     GameStatus status; // the enum of game status, to indicate which state of the game, for example, before flop.
 
+    int prevPlayerPos(int curPos) const
+    {
+        return (curPos - 1 + this->playerCount) % this->playerCount;
+    }
+
     int nextPlayerPos(int curPos) const
     {
         return (curPos + 1) % this->playerCount;
@@ -704,6 +760,13 @@ private:
         return false;
     }
 
+
+
+    bool isLoopEnd(int curPos, int endPos) const
+    {
+        return (curPos == endPos);
+    }
+    
     void displayPublicCard()
     {
         cout << "The public card :\n";

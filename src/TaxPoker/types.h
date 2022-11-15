@@ -133,6 +133,15 @@ enum CardLevel
     TotalLevelCount = 9        
 };
 
+enum ClientStatus
+{
+    cSTATUS_WAIT        = 0 ,
+    cSTATUS_READY     = 1,
+
+    cSTATUS_INV           =10
+};
+
+
 // Action : Fold, Check, Call, Raise, Allin
 enum PlayerAction
 {
@@ -157,14 +166,14 @@ enum MsgType
 
 enum GameStatus
 {
-    GS_Init = 0,
+    GS_Init = 0,               //下盲注
 
-    GS_preFlop = 1,
-    GS_postFlop = 2,
+    GS_preFlop = 1,        //翻牌前
+    GS_postFlop = 2,     //翻牌后
 
-    GS_Turn = 3,
-    GS_River = 4,
-    GS_Final
+    GS_Turn = 3,           //转牌后
+    GS_River = 4,          //河牌后
+    GS_Final                  //最后比大小
 };
 
 #if 0
@@ -266,11 +275,11 @@ public:
         return;
     }
 
-    void fillActionMsg(char msg[], int id, int option, int bet, int behind, int bonus)
+    void fillActionMsg(char msg[], int id, int option, int bet, int behind, int bonus, GameStatus stage) // GameStatus
     {
-        const char * type2format = "Type:%u;\nPlayer ID:%u;\nOption:%u;\nBet:%u;\nBehind:%u;\nBonus:%u\n";
+        const char * type2format = "Type:%u;\nPlayer ID:%u;\nOption:%u;\nBet:%u;\nBehind:%u;\nBonus:%u;\nStage:%u\n";
 
-        sprintf(msg, type2format, MsgType::cMSG_ACQ_ACTION, id, option, bet, behind, bonus);
+        sprintf(msg, type2format, MsgType::cMSG_ACQ_ACTION, id, option, bet, behind, bonus, (int)stage);
 
         return;
     }
@@ -286,13 +295,24 @@ ostream &operator<<(ostream &os, const Server2ClientMsg &ob)
 class Client2ServerMsg
 {
 public:
-    int PlayerId;
+    const int cRespMsgItemCount = 4;
+
+    /* The Player status field */
     bool isFold;
     bool isAllIn;
-    int bet;
 
     Client2ServerMsg()
     {
+        this->isFold = false;
+        this->isAllIn = false;
+    }
+
+    void Init()
+    {
+        this->playerId = -1;
+        this->isFold = false;
+        this->isAllIn = false;
+        this->bet = 0;
     }
 
     ~Client2ServerMsg()
@@ -301,7 +321,7 @@ public:
 
     Client2ServerMsg(const Client2ServerMsg &msg)
     {
-        this->PlayerId = msg.PlayerId;
+        this->playerId = msg.playerId;
         this->isFold = msg.isFold;
         this->isAllIn = msg.isAllIn;
         this->bet = msg.bet;
@@ -309,7 +329,7 @@ public:
 
     bool operator==(const Client2ServerMsg &msg)
     {
-        if (this->PlayerId == msg.PlayerId && this->isFold == msg.isFold && this->isAllIn == msg.isAllIn && this->bet == msg.bet)
+        if (this->playerId == msg.playerId && this->isFold == msg.isFold && this->isAllIn == msg.isAllIn && this->bet == msg.bet)
         {
             return true;
         }
@@ -324,6 +344,77 @@ public:
         sprintf(msg, msgFormat, (0 == action)?"Fold":"None", bet, remindBet);
         
     }
+
+    
+    void Analysis(char *str)
+    {
+        const char *delim = ";";
+        char *p = NULL;
+        char  itemStr[cRespMsgItemCount][20];
+        int     itemValue[cRespMsgItemCount];
+        int     itemIndex = 0;
+        
+        //cout<<"Analysis Reponse:{\n"<<str<<"}"<<endl;
+
+        p = strtok(str, delim);
+
+        while(p) 
+        {
+            strcpy(itemStr[itemIndex++], p);
+            p = strtok(NULL, delim);
+        }
+
+        //cout<<"Dispatch each item string, total item count "<<itemIndex<<endl;
+
+        int i=0;
+        while(i < itemIndex)
+        {
+            char * pVal = strchr(itemStr[i], int(':'));
+            itemValue[i] = atoi(pVal+1);
+
+            //cout<<itemStr[i] << " , pVal "<<pVal<<", val"<< itemValue[i]<<endl;
+            
+            i++;
+        }
+        //cout<<"Dispatch Finish !"<<endl;
+
+        this->type       = itemValue[0];
+        this->playerId = itemValue[1];
+        this->action     = itemValue[2];
+        this->bet         = itemValue[3];
+
+        return;
+    }
+
+    void setBet(int bet)
+    {
+        this->bet = bet;
+        return;
+    }
+
+    int getBet()
+    {
+        return bet;
+    }
+
+    void setPlayerId(int playerId)
+    {
+        this->playerId = playerId;
+    }
+
+    int getPlayerId()
+    {
+        return this->playerId;
+    }
+
+    private:
+    /* The response message field */
+    int type;        //Message Type
+    int playerId; // Player ID
+    int action;    // Player Action
+    int bet;         // Player Pay Bet
+
+    
 };
 
 ostream &operator<<(ostream &os, const Client2ServerMsg &ob)
