@@ -11,6 +11,8 @@
 
 using namespace std;
 
+#define STATIC   static
+
 /***************************************************************
 The structure to describe the Power of a group card - we call it card set.
 Each card set (5 public card + 2 player private card) should have a power value
@@ -58,20 +60,20 @@ Notes: The Ruler function must be staic in current design
 class Ruler
 {
 
-private:
+public:
     Ruler() {}
     ~Ruler() {}
 
     /* These check function group to determinate the Card Set Level */
-    static bool checkStraightFlush(const Card cardSet[], CardPower &cardPower);
-    static bool checkFourKind(const Card cardSet[], CardPower &cardPower);
-    static bool checkWholeHouse(const Card cardSet[], CardPower &cardPower);
-    static bool checkFlush(const Card cardSet[], CardPower &cardPower);
-    static bool checkStraight(const Card cardSet[], CardPower &cardPower);
-    static bool checkSet(const Card cardSet[], CardPower &cardPower);
-    static bool checkTwoPairs(const Card cardSet[], CardPower &cardPower);
-    static bool checkOnePairs(const Card cardSet[], CardPower &cardPower);
-    static bool confirmHighCard(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkStraightFlush(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkFourKind(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkWholeHouse(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkFlush(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkStraight(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkSet(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkTwoPairs(const Card cardSet[], CardPower &cardPower);
+    STATIC bool checkOnePairs(const Card cardSet[], CardPower &cardPower);
+    STATIC bool confirmHighCard(const Card cardSet[], CardPower &cardPower);
 
 
     /* To calculate the card set power value through the CardPower */    
@@ -445,35 +447,33 @@ bool Ruler::checkSet(const Card cardSet[], CardPower &cardPower)
 
         for (int j = i + 1; j < Ruler::cMaxCardNum; j++)
         {
-            if (cardSet[i].value == cardSet[j].value)
-            {
-                len++;
-                if (3 == len)
-                {
-                    cardPower.level = SetLevel;
-                    cardPower.key1 = (int)cardSet[j].value;
-
-                    for (int k = 0; k < Ruler::cMaxCardNum; k++)
-                    {
-                        if ((int)cardSet[k].value != cardPower.key1)
-                        {
-                            if (0 == cardPower.key2)
-                            {
-                                cardPower.key2 = (int)cardSet[k].value;
-                            }
-                            else if (0 == cardPower.key3)
-                            {
-                                cardPower.key3 = (int)cardSet[k].value;
-                                return true;
-                            }
-                        }
-                    }
-
-                    return true;
-                }
-            }
+            if (cardSet[j].value != cardSet[i].value)
             {
                 break;
+            }
+
+            len++;
+            if (3 == len)
+            {
+                cardPower.level = SetLevel;
+                cardPower.key1 = (int)cardSet[j].value;
+
+                for (int k = 0; k < Ruler::cMaxCardNum; k++)
+                {
+                    if ((int)cardSet[k].value != cardPower.key1)
+                    {
+                        if (0 == cardPower.key2)
+                        {
+                            cardPower.key2 = (int)cardSet[k].value;
+                        }
+                        else if (0 == cardPower.key3)
+                        {
+                            cardPower.key3 = (int)cardSet[k].value;
+                            return true;
+                        }
+                    }
+                }
+                return true;
             }
         }
     }

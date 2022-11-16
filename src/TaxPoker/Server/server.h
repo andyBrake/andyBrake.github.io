@@ -81,9 +81,9 @@ public:
 
         for (int i=0; i<needPlayerCnt; i++)
         {
-            playerId = this->pTable->addPlayer();
-            cout<<"Add a Robot as Player "<<playerId<<endl;
-            sleep(2);
+            playerId = this->pTable->addRobotPlayer();
+
+            sleep(1);
         }
         
         return;

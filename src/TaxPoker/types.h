@@ -160,6 +160,8 @@ enum MsgType
     cMSG_ASSIGN_ID       = 0,     // To try to connect with Server, assign a Player ID
     cMSG_SYNC_STATUS = 1,     // Sync the status to 1 ready
     cMSG_ACQ_ACTION   = 2,     // acquire and response player action
+    cMSG_ADJUST_BET    = 3,     // adjust the player total bet
+    
     cMSG_INV                    = 10
 
 };
@@ -281,6 +283,15 @@ public:
 
         sprintf(msg, type2format, MsgType::cMSG_ACQ_ACTION, id, option, bet, behind, bonus, (int)stage);
 
+        return;
+    }
+
+    void fillAdjustBetMsg(char msg[], int id, int adj)
+    {
+        const char * type3format = "Type:%u;\nPlayer ID:%u;\nAdjust:%u\n";
+
+        sprintf(msg, type3format, MsgType::cMSG_ADJUST_BET, id, adj);
+        
         return;
     }
 };

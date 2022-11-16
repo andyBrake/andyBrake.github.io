@@ -7,6 +7,7 @@ class MsgType(IntEnum):
     cMSG_ASSIGN_ID = 0 # To try to connect with Server, assign a Player ID
     cMSG_SYNC_STATUS = 1 # Sync the status to 1 ready
     cMSG_ACQ_ACTION = 2 # acquire and response player action
+    cMSG_ADJUST_BET =3  # adjust the player total bet
     cMSG_INV        = 10
 
 @unique
@@ -43,6 +44,12 @@ class PlayerAction(IntEnum):
 #    Behind: 7        # 表示在你之后，还有多少位Player决策。例如Blind消息，Behind则为0，因为只需要一个Player支付盲注
 #    Bonus: 100       # 表示当前底池总共有多少价值
 #}
+#### The fourth kind request 
+#{
+#    Type : 3
+#    Player ID: 1
+#    Adjust: -5        
+#} 
 #####################################################################
 class Request:
     def __init__(self, info:str):
@@ -67,6 +74,9 @@ class Request:
             self.behind:int = int(req[4].strip('\n').strip().split(':')[1])
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
             self.status:int = int(req[6].strip('\n').strip().split(':')[1])
+        elif self.type == MsgType.cMSG_ADJUST_BET:
+            self.id:int = int(req[1].strip('\n').strip().split(':')[1])
+            self.adjust:int = int(req[2].strip('\n').strip().split(':')[1])
         else:
             print("Invalid Request Type"%self.type)
         
@@ -80,7 +90,8 @@ class Request:
         elif (MsgType.cMSG_ACQ_ACTION == self.type):
             print("ID:%u, Option:%u, Bet:%u, Behind:%u, Bonus:%u, Status:%u"
                 %(self.id, self.option, self.bet, self.behind, self.bonus, self.status))
-
+        elif self.type == MsgType.cMSG_ADJUST_BET:
+            print("ID: %u, Adjust Bet:%u"%(self.id, self.adjust))
 
 
 
@@ -107,6 +118,12 @@ class Request:
 #                     # 3 AllIn（此时Bet不一定比require要求的大，但是Player的剩余筹码归0） 
 #    Bet: 10          # Player选择支付的筹码，可能比require要求的大，即表示raise了
 #}
+#### The fourth kind response  
+#{
+#    Type : 3
+#    Player ID: 1
+#    Adjust: 0          # Player选择支付的筹码，可能比require要求的大，即表示raise了
+#}
 #####################################################################
 class Response:
     def __init__(self):
@@ -116,6 +133,7 @@ class Response:
         self.status:int = 0
         self.action:int = 0
         self.bet:int = 0
+        self.adjust:int = 0
 
     def setConnectType(self, playerName:str):
         self.type = MsgType.cMSG_ASSIGN_ID
@@ -139,6 +157,7 @@ class Response:
         type0format = "Type : {type};\nPlayer Name: {name}\n"
         type1format = "Type : {type};\nPlayer ID: {id};\nStatus:{status}\n"
         type2format = "Type : {type};\nPlayer ID: {id};\nAction:{action};\nBet:{bet}\n"
+        type3format = "Type : {type};\nPlayer ID: {id};\nAdjust:{adjust}\n"
         message:str = None
 
         if self.type == MsgType.cMSG_ASSIGN_ID:
@@ -147,6 +166,8 @@ class Response:
             message = type1format.format(type=1, id=self.PlayerId, status=self.status)
         elif self.type == MsgType.cMSG_ACQ_ACTION:
             message = type2format.format(type=2, id=self.PlayerId, action=self.action, bet=self.bet)
+        elif self.type == MsgType.cMSG_ADJUST_BET:
+            message = type3format.format(type=3, id=self.PlayerId, adjust=self.adjust)
         else:
             message = "Invalid Type!!!!"
             print("To String get invalid type %u"%self.type)

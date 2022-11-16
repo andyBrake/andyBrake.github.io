@@ -82,7 +82,7 @@ public:
     }
 
     /* Add a Robot Player */
-    int addPlayer(void)
+    int addRobotPlayer(void)
     {
         int playerId = -1;
 
@@ -93,7 +93,7 @@ public:
                 playerId = i;
                 allPlayer[i] = new Robot(i);
 
-                cout<<"Add Player to ID "<<playerId<<endl;
+                cout<<"Add Robot Player to ID "<<playerId<<endl;
                 break;
             }
         }
@@ -125,10 +125,11 @@ public:
         return playerId;
     }
 
+    /* To active these waiting player */
     void update()
     {
-        int cnt = 0;
-        
+        this->playerCount = 0;
+
         for (int i=0; i<cMaxPlayerCount; i++)
         {
             if (allPlayer[i] != NULL)
@@ -136,12 +137,23 @@ public:
                 if (PS_Waiting == allPlayer[i]->getStatus())
                 {
                     allPlayer[i]->active();
+                }
+
+                if (PS_Playing == allPlayer[i]->getStatus())
+                {
                     this->playerCount++;
-                    cnt++;
+                    this->maxActivePlayerId = i;
                 }
             }
         }
-        cout<<"Active Player Count "<<cnt<<endl;
+        cout<<"Active Player Count "<<this->playerCount<<endl;
+
+        if (this->maxActivePlayerId + 1 != this->playerCount)
+        {
+            cout<<"Active Player Count "<<this->playerCount<<" doesn't match the Max Active ID "<<this->maxActivePlayerId<<endl;
+            assert(0);
+        }
+
         return;
     }
 
@@ -252,14 +264,13 @@ public:
 
         /* Set Blind bet */
         ret = acquirePlayerBlind(allPlayer[sbPos], currentLoopBet);
-
+        assert(0 == ret);
         ret = waitPlayerPayBlind(allPlayer[sbPos], bet);
+        assert(0 == ret);
 
         bounsPool += currentLoopBet;
-
         /* to deal all player private cards */
         dealPrivateCards(sbPos);
-
         /* start to Pre Flop */
         this->status = GS_preFlop;
         betLoop(sbPos);
@@ -276,9 +287,11 @@ public:
         /* start to Post Flop */
         for (this->status = GS_postFlop; this->status < GS_Final; ++(this->status))
         {
-            cout << endl;
-            cout << "===Start to process " << strOfStatus[(int)this->status] << ", " << this->status << " ...." << endl;
-            cout << "\tStill have " << this->stayPlayerCount << " Player alive" << endl;
+            cout << "==============================================================="<<endl;
+            cout << "==                 Start to process " << strOfStatus[(int)this->status] << ", " 
+                 << this->status << " ...." << endl;
+            cout << "==                 Still have " << this->stayPlayerCount << " Player alive" << endl;
+            cout << "==============================================================="<<endl;
 
             initPlayerRoundInfo();
 
@@ -510,20 +523,19 @@ public:
             }
         }
         assert(1 == winnerCnt);
-        cout<<"Winner Player ID : "<<winnerID<<", bouns : "<<bounsPool<<endl;
 
-
-        ////:TODO  to add the player total bet
+        moveBouns(winnerID);
 
         return;
     }
 
     void moveBouns(int winnerId)
     {
-        cout<<"Move to Winner Player ID : "<<winnerId<<", bouns : "<<bounsPool<<endl;
+        Player *winPlayer = allPlayer[winnerId];
+        
+        cout<<"Move to Winner Player ID : "<<winnerId<<", bouns : "<<this->bounsPool<<endl;
 
-
-        ////:TODO  to add the player total bet
+        winPlayer->adjustBet(this->bounsPool);
         return;
     }
 
@@ -717,6 +729,7 @@ private:
     SimpleChannel channel;
 
     int playerCount; // how many active player in this round game
+    int maxActivePlayerId; // the max Player ID in active status
     int gameCount;  // how many games played
     int roundCount; // how many round of game played
 

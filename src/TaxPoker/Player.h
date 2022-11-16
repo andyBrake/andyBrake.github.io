@@ -55,7 +55,7 @@ public:
         strncpy(this->name, name, cMaxNameLen);
     }
 
-    void adjustBet(int change)
+    virtual void adjustBet(int change)
     {
         this->totalBet += change;
         if (this->totalBet < 0)
@@ -63,6 +63,8 @@ public:
             cout << "Invalid Total Bet" << this->totalBet << endl;
             exit(-1);
         }
+        cout<<"Player "<<this->id<<" adjust bet "<<change<<" to total "<<this->totalBet<<endl;
+        return;
     }
 
     bool getBlind()
@@ -162,7 +164,7 @@ protected:
     int channelId; // the channel ID to communicate with this player client
     Card cards[2];
 
-    int id; // the sequence in table
+    int id; // the sequence in table, namely the Player ID
     char name[cMaxNameLen];
     PlayerType type;
     PlayerStatus status;
@@ -177,6 +179,14 @@ protected:
 class Robot : public Player
 {
 public:
+    /*
+        0 : always fold
+        1 : just call
+        2 : Raise to 10
+        3 : all-in
+    */
+    const int cRobotStrategy = 0; 
+    
     Robot(int id)
     {
         init(id);
@@ -226,15 +236,36 @@ public:
             this->response.bet = 0;
         }
         #endif
-        /* the robot just bet the necessary bet */
         else
         {
-            this->response.isFold = false;
-            this->response.isAllIn = false;
+            if (0 == cRobotStrategy)
+            {
+                this->response.isFold = true;
+                this->response.isAllIn = false;
+                
+                this->response.setBet(0);
+                return;
+            }
+            /* the robot just bet the necessary bet */
+            if (1 == cRobotStrategy)
+            {
+                this->response.isFold = false;
+                this->response.isAllIn = false;
+                
+                this->response.setBet(currentLoopBet);
+                return;
+            }
             /* Robot try to raise */
-            currentLoopBet = (currentLoopBet < 10) ? 10 : currentLoopBet;
+            if (2 == cRobotStrategy)
+            {
+                this->response.isFold = false;
+                this->response.isAllIn = false;
+                currentLoopBet = (currentLoopBet < 10) ? 10 : currentLoopBet;
+                
+                this->response.setBet(currentLoopBet);
+                return;
+            }
             
-            this->response.setBet(currentLoopBet);
         }
     }
 
@@ -243,6 +274,8 @@ public:
         isFold = this->response.isFold;
         isAllin = this->response.isAllIn;
         bet = this->response.getBet();
+
+        this->totalBet -= bet;
 
         this->currentPayBet = bet;
 
@@ -327,6 +360,20 @@ public:
 
         cout<<endl;
         return;
+    }
+
+    
+    virtual void adjustBet(int change)
+    {
+        Player::adjustBet(change);
+
+        memset(msg, 0, sizeof(msg));
+
+        request.fillAdjustBetMsg(msg, this->id, change);
+
+        send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
+
+        cout<<"Acquire Blind Send Request:{\n"<<msg<<"}"<<endl;
     }
 
     virtual int acquirePlayerBlind(int blindBet)

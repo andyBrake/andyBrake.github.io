@@ -64,8 +64,8 @@ class Client:
                 #print(msg)
                 #logging.info("{}".format(data.decode()))
                 print("\t\tRcv Server Msg:%s"%data)
-                request = Common.Request(data.decode())
-                self._process(request)
+                self.request = Common.Request(data.decode())
+                self._process(self.request)
                 self._response2server()
  
     # generate the response to Server
@@ -113,6 +113,15 @@ class Client:
             self.send(rsp.toString())
         # Playing 
         elif self.state == ClientState.cPLAYING_SYNC:
+            if self.request.type == Common.MsgType.cMSG_ADJUST_BET:
+                rsp = self._rsp4AdjustBet()
+                self.send(rsp.toString())
+                print("\nResp Msg:")
+                print(rsp.toString())
+                print("\n")
+                return
+
+
             rsp = self._decideAction()
             self.send(rsp.toString())
             print("\nResp Msg:")
@@ -134,6 +143,11 @@ class Client:
     #}
     ####################################################################################
     def _playerAction(self, request:Common.Request):
+        if request.type == Common.MsgType.cMSG_ADJUST_BET:
+            self.player.total_bet = self.player.total_bet + request.adjust
+            print("Player adjust bet %d to %d"%(request.adjust, self.player.total_bet))
+            return
+
         if request.type != Common.MsgType.cMSG_ACQ_ACTION:
             print("Invalid type! %u"%request.type)
             return
@@ -154,6 +168,12 @@ class Client:
                     
         rsp.setActionType(self.player.id, action=Common.PlayerAction.cPLAYER_CALL, bet=self.player.pay_bet)
         self.player.total_bet = self.player.total_bet - self.player.pay_bet
+        
+        return rsp
+    
+    def _rsp4AdjustBet(self):
+        rsp = Common.Response()
+        rsp.type = MsgType.cMSG_ADJUST_BET
         
         return rsp
 

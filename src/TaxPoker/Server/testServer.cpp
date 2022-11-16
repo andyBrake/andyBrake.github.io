@@ -189,17 +189,21 @@ int main()
 int main()
 {
     int ret = 0;
+    int robotPlayerCnt = 2, remotePlayerCnt = 1;
+    int totalPlayerCnt = robotPlayerCnt + remotePlayerCnt;
     Server server;
 
     server.init();
 
     /* Simulate some Player */
-    server.Debug_AddPlayer(1);
+    server.Debug_AddPlayer(robotPlayerCnt);
 
-    /* At least there is 2 player to play game */
-    server.waitPlayerJoin(2);
+    /* there is 1 remote player to play game */
+    server.waitPlayerJoin(totalPlayerCnt);
 
+    cout<<"\n*******************************************"<<endl;
     cout<<"\n\tStart to game............."<<endl;
+    cout<<"\n*******************************************"<<endl;
 
     server.startGame();
 

@@ -97,13 +97,13 @@ int main()
                         Card(Spade, CV_2),
                         Card(Diamond, CV_2)};
     // Set
-    Card cardSet2[7] = {Card(Spade, CV_A),
-                        Card(Hearts, CV_K),
-                        Card(Spade, CV_Q),
-                        Card(Club, CV_5),
-                        Card(Spade, CV_5),
-                        Card(Diamond, CV_5),
-                        Card(Spade, CV_2)};
+    Card cardSet2[7] = { Card(Club, CV_K),
+                                        Card(Diamond, CV_7),
+                                        Card(Club, CV_6),
+                                        Card(Diamond, CV_5),
+                                        Card(Club, CV_5),
+                                        Card(Spade, CV_5),
+                                        Card(Hearts, CV_3)};
     // Flush
     Card cardSet3[7] = {Card(Hearts, CV_A),
                         Card(Club, CV_K),
@@ -112,7 +112,7 @@ int main()
                         Card(Diamond, CV_9),
                         Card(Hearts, CV_6),
                         Card(Diamond, CV_2)};
-
+#if 0
     bRet = Ruler::checkStraightFlush(cardSet0, cardPower);
     if (bRet)
     {
@@ -122,7 +122,9 @@ int main()
     {
         cout << "Straight False" << endl;
     }
-
+#endif
+    
+#if 0
     bRet = Ruler::checkWholeHouse(cardSet1, cardPower);
     if (bRet)
     {
@@ -166,6 +168,6 @@ int main()
     test4TwoPair();
 
     test4OnePair();
-
+#endif
     cout << "Test End" << endl;
 }
