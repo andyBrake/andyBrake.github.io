@@ -1,5 +1,13 @@
 from enum import IntEnum, unique
 
+gPlayerInitBet = 500
+
+@unique
+class CardType(IntEnum):
+    cCARD_SPADE = 0 # 黑桃    \u2664
+    cCARD_HEART = 1 # 红桃    \u2661
+    cCARD_CLUB  = 2 # 梅花    \u2663
+    cCARD_DIAMOND = 3 # 方片    \u2662
 
 
 @unique
@@ -19,6 +27,10 @@ class PlayerAction(IntEnum):
     cPLAYER_ALLIN = 4
     cPLAYER_INV   = 10
 
+class Card():
+    def __init__(self, t:CardType, v:int):
+        self.t = t
+        self.v = v
 
 #####################################################################
 # The Request message came from Server, send to Client
