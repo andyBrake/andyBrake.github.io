@@ -1,8 +1,9 @@
+# Tips
+## 删除被占用的端口
 lsof -i:9999
 
-
+## 编译带多线程库
  g++  -pthread  -O testServer.cpp
-
 
 
 # 在游戏开始前的消息交互
@@ -39,6 +40,15 @@ lsof -i:9999
     Type : 1
     Player ID: 1
     Status:1         # Status 分类：0 表示Ready， 1 表示 Start
+    Count : x        # x 表示本局游戏有多少玩家,后续会跟上x个玩家的信息
+    P0    : Description0 # 最多有8名玩家参与，当小于8名玩家的时候，不存在的位置的description为 "None"
+    P1    : Description1 # 在每一个Description中，会包含玩家name，剩余的bet，以及上一次的action
+    P2    : Description2
+    P3    : Description3
+    P4    : Description4
+    P5    : Description5
+    P6    : Description6
+    P7    : Description7
 }
 3. Server 收到Client的Start确认消息，则开始本局游戏
 
@@ -55,6 +65,7 @@ Client 1 -> Server 1 -> Client 2 ->Server 2 -> Client 3 -> Server 3
     Action:1         # 0 Fold, 1 Check (此时Bet一定为0), 2 Raise（此时Bet一定比require要求的大）, 
                      # 3 AllIn（此时Bet不一定比require要求的大，但是Player的剩余筹码归0） 
     Bet: 10          # Player选择支付的筹码，可能比require要求的大，即表示raise了
+    Total Bet : 400  # Player 剩余的总Bet数量，需要扣除本次action之后的值
 }
 
 ## Server2Client Msg:
@@ -66,6 +77,16 @@ Client 1 -> Server 1 -> Client 2 ->Server 2 -> Client 3 -> Server 3
     Bet:5            # 表示最低需要支付的筹码值
     Behind: 7        # 表示在你之后，还有多少位Player决策。例如Blind消息，Behind则为0，因为只需要一个Player支付盲注
     Bonus: 100       # 表示当前底池总共有多少价值
+    Status : 2       # 表示当前进展到一局游戏的哪一步了
+    Count : x        # x 表示本局游戏有多少玩家,后续会跟上x个玩家的信息
+    P0    : Description0 # 最多有8名玩家参与，当小于8名玩家的时候，不存在的位置的description为 "None"
+    P1    : Description1 # 在每一个Description中，会包含玩家name，剩余的bet，以及上一次的action
+    P2    : Description2
+    P3    : Description3
+    P4    : Description4
+    P5    : Description5
+    P6    : Description6
+    P7    : Description7
 }
 
 

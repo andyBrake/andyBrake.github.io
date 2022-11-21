@@ -173,8 +173,11 @@ public:
         close(serverSockId);
 
         pthread_join(tidListen, NULL);
-    
-        cout<<"Stop the Server!!!"<<endl;
+
+        cout<<"\n*******************************************"<<endl;
+        cout<<"                       Stop the Server!!!"<<endl;
+        cout<<"\n*******************************************"<<endl;
+        
     }
 
 private:

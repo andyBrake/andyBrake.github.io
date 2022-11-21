@@ -186,9 +186,11 @@ class ClientController:
 
     def _decideAction(self):
         rsp = Common.Response()
-                    
-        rsp.setActionType(self.player.id, action=Common.PlayerAction.cPLAYER_CALL, bet=self.player.pay_bet)
+
         self.player.total_bet = self.player.total_bet - self.player.pay_bet
+                    
+        rsp.setActionType(self.player.id, action=Common.PlayerAction.cPLAYER_CALL, 
+                            bet=self.player.pay_bet, total_bet=self.player.total_bet)
         
         return rsp
     

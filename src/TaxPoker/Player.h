@@ -325,7 +325,7 @@ public:
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
-        cout<<"Connect Send Request:{\n"<<msg<<"}"<<endl;
+        cout<<"Connect Send Request:\n{\n"<<msg<<"}"<<endl;
         sleep(1);
         
         do
@@ -333,7 +333,7 @@ public:
             memset(msg, 0, sizeof(msg));
             recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
 
-            cout<<"Confirm Ready Rcv Reponse:{\n"<<msg<<"}"<<endl;
+            cout<<"Confirm Ready Rcv Reponse:\n{\n"<<msg<<"}"<<endl;
         }while(0);
     }
 
@@ -346,7 +346,7 @@ public:
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
-        cout<<"Start Send Request:\n{"<<msg<<"}"<<endl;
+        cout<<"Start Send Request:{\n"<<msg<<"}"<<endl;
         sleep(1);
 
         /* must wait for the Client confirm start status */
@@ -485,6 +485,11 @@ public:
         this->isStay = !isFold;
         this->isAllIn = isAllIn;
         this->totalBet -= bet;
+        if (response.getTotalBet() != this->totalBet)
+        {
+            cout<<"Total Bet "<<response.getTotalBet() << " != "<<this->totalBet<<endl;
+            assert(0);
+        }
         this->currentPayBet += bet;
 
         return;

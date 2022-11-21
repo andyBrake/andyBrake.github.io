@@ -64,6 +64,16 @@ class Card():
 #    Bet:5            # 表示最低需要支付的筹码值
 #    Behind: 7        # 表示在你之后，还有多少位Player决策。例如Blind消息，Behind则为0，因为只需要一个Player支付盲注
 #    Bonus: 100       # 表示当前底池总共有多少价值
+#    Status : 1       # 表示当前进展到一局游戏的哪一步了
+#    Count : x        # x 表示本局游戏有多少玩家,后续会跟上x个玩家的信息
+#    P0    : Description0
+#    P1    : Description1
+#    P2    : Description2
+#    P3    : Description3
+#    P4    : Description4
+#    P5    : Description5
+#    P6    : Description6
+#    P7    : Description7
 #}
 #### The fourth kind request 
 #{
@@ -89,7 +99,7 @@ class Request:
         elif self.type == MsgType.cMSG_SYNC_STATUS:
             self.id = int(req[1].strip('\n').strip().split(':')[1])
             self.status:int = int(req[2].strip('\n').strip().split(':')[1])
-            self.totalPlayerCnt : int(req[3].strip('\n').strip().split(':')[1])
+            self.totalPlayerCnt:int = int(req[3].strip('\n').strip().split(':')[1])
             self.desc:list[str] = []
             
             for i in range(0, 8):
@@ -105,6 +115,12 @@ class Request:
             self.behind:int = int(req[4].strip('\n').strip().split(':')[1])
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
             self.status:int = int(req[6].strip('\n').strip().split(':')[1])
+            self.totalPlayerCnt : int(req[7].strip('\n').strip().split(':')[1])
+            self.desc:list[str] = []
+            for i in range(0, 8):
+                print(" Try to get player %u"%i)
+                print(req[7 + i].strip('\n').strip().split(':')[1])
+                self.desc.append(req[4 + i].strip('\n').strip().split(':')[1])
         # Adjust Player total bet
         elif self.type == MsgType.cMSG_ADJUST_BET:
             self.id:int = int(req[1].strip('\n').strip().split(':')[1])
@@ -149,6 +165,7 @@ class Request:
 #    Action:1         # 0 Fold, 1 Check (此时Bet一定为0), 2 Raise（此时Bet一定比require要求的大）, 
 #                     # 3 AllIn（此时Bet不一定比require要求的大，但是Player的剩余筹码归0） 
 #    Bet: 10          # Player选择支付的筹码，可能比require要求的大，即表示raise了
+#    Total Bet : 400  # Player 剩余的总Bet数量，需要扣除本次action之后的值
 #}
 #### The fourth kind response  
 #{
@@ -178,17 +195,18 @@ class Response:
         self.status = status
         return
 
-    def setActionType(self, id:int, action:int, bet:int):
+    def setActionType(self, id:int, action:int, bet:int, total_bet:int):
         self.type = MsgType.cMSG_ACQ_ACTION
         self.PlayerId = id
         self.action = action
         self.bet = bet
+        self.total_bet = total_bet
         return
 
     def toString(self) -> str:
         type0format = "Type : {type};\nPlayer Name: {name}\n"
         type1format = "Type : {type};\nPlayer ID: {id};\nStatus:{status}\n"
-        type2format = "Type : {type};\nPlayer ID: {id};\nAction:{action};\nBet:{bet}\n"
+        type2format = "Type : {type};\nPlayer ID: {id};\nAction:{action};\nBet:{bet};\nTotal Bet:{totalBet}\n"
         type3format = "Type : {type};\nPlayer ID: {id};\nAdjust:{adjust}\n"
         message:str = None
 
@@ -197,7 +215,7 @@ class Response:
         elif self.type == MsgType.cMSG_SYNC_STATUS:
             message = type1format.format(type=1, id=self.PlayerId, status=self.status)
         elif self.type == MsgType.cMSG_ACQ_ACTION:
-            message = type2format.format(type=2, id=self.PlayerId, action=self.action, bet=self.bet)
+            message = type2format.format(type=2, id=self.PlayerId, action=self.action, bet=self.bet, totalBet = self.total_bet)
         elif self.type == MsgType.cMSG_ADJUST_BET:
             message = type3format.format(type=3, id=self.PlayerId, adjust=self.adjust)
         else:

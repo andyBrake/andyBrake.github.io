@@ -281,7 +281,7 @@ public:
         }
         else if (1 == status)
         {
-            sprintf(msg, allPlayerInfoFormat, MsgType::cMSG_SYNC_STATUS, id, status, 3,
+            sprintf(msg, allPlayerInfoFormat, MsgType::cMSG_SYNC_STATUS, id, status, 3, // total player count
                 "None",   // P0
                 "None",   // P1
                 "None",   // P2
@@ -304,9 +304,19 @@ public:
 
     void fillActionMsg(char msg[], int id, int option, int bet, int behind, int bonus, GameStatus stage) // GameStatus
     {
-        const char * type2format = "Type:%u;\nPlayer ID:%u;\nOption:%u;\nBet:%u;\nBehind:%u;\nBonus:%u;\nStage:%u\n";
+        const char * type2format = "Type:%u;\nPlayer ID:%u;\nOption:%u;\nBet:%u;\nBehind:%u;\nBonus:%u;\nStage:%u;\nCount:%u;\n" \
+                                                           "P0:%s;\nP1:%s;\nP2:%s;\nP3:%s;\nP4:%s;\nP5:%s;\nP6:%s;\nP7:%s;\n";
 
-        sprintf(msg, type2format, MsgType::cMSG_ACQ_ACTION, id, option, bet, behind, bonus, (int)stage);
+        sprintf(msg, type2format, MsgType::cMSG_ACQ_ACTION, id, option, bet, behind, bonus, (int)stage, 3, // total player count
+                                                            "None",   // P0
+                                                            "None",   // P1
+                                                            "None",   // P2
+                                                            "None",   // P3
+                                                            "None",   // P4
+                                                            "None",   // P5
+                                                            "None",   // P6
+                                                            "None"    // P7
+                                                            );
 
         return;
     }
@@ -331,7 +341,7 @@ ostream &operator<<(ostream &os, const Server2ClientMsg &ob)
 class Client2ServerMsg
 {
 public:
-    const int cRespMsgItemCount = 4;
+    const int cRespMsgItemCount = 5;
 
     /* The Player status field */
     bool isFold;
@@ -408,7 +418,7 @@ public:
             char * pVal = strchr(itemStr[i], int(':'));
             itemValue[i] = atoi(pVal+1);
 
-            //cout<<itemStr[i] << " , pVal "<<pVal<<", val"<< itemValue[i]<<endl;
+            //cout<< itemStr[i] << " , pVal "<<pVal<<", val"<< itemValue[i]<<endl;
             
             i++;
         }
@@ -418,6 +428,7 @@ public:
         this->playerId = itemValue[1];
         this->action     = itemValue[2];
         this->bet         = itemValue[3];
+        this->totalBet = itemValue[4];
 
         return;
     }
@@ -431,6 +442,11 @@ public:
     int getBet()
     {
         return bet;
+    }
+
+    int getTotalBet()
+    {
+        return this->totalBet;
     }
 
     void setPlayerId(int playerId)
@@ -449,7 +465,7 @@ public:
     int playerId; // Player ID
     int action;    // Player Action
     int bet;         // Player Pay Bet
-
+    int totalBet;  // Player remind total bet
     
 };
 

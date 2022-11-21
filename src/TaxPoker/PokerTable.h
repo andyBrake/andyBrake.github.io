@@ -304,8 +304,10 @@ public:
         }
 
         /* start to check winner */
-        cout << "The status " << strOfStatus[(int)this->status] << endl;
-        cout << "Must check private cards to determine Winenr \n";
+        cout << "==============================================================="<<endl;
+        cout << "    The status " << strOfStatus[(int)this->status] << endl;
+        cout << "    Must check private cards to determine Winenr \n";
+        cout << "==============================================================="<<endl;
 
         displayPublicCard();
         displayPlayerCard();
