@@ -271,8 +271,33 @@ public:
     void fillSyncMsg(char msg[], int id, int status)
     {
         const char * type1format = "Type:%u;\nPlayer ID:%u;\nStatus:%u\n";
-
-        sprintf(msg, type1format, MsgType::cMSG_SYNC_STATUS, id, status);
+        const char * allPlayerInfoFormat = "Type:%u;\nPlayer ID:%u;\nStatus:%u;\nCount:%u;\n"  \
+                                "P0:%s;\nP1:%s;\nP2:%s;\nP3:%s;\nP4:%s;\nP5:%s;\nP6:%s;\nP7:%s;\n";
+        
+        /* Start game should append all player info */
+        if (0 == status)
+        {
+            sprintf(msg, type1format, MsgType::cMSG_SYNC_STATUS, id, status);
+        }
+        else if (1 == status)
+        {
+            sprintf(msg, allPlayerInfoFormat, MsgType::cMSG_SYNC_STATUS, id, status, 3,
+                "None",   // P0
+                "None",   // P1
+                "None",   // P2
+                "None",   // P3
+                "None",   // P4
+                "None",   // P5
+                "None",   // P6
+                "None"    // P7
+                );
+        }
+        else
+        {
+            cout<<"Invalid Status "<<status<<endl;
+            exit(1);
+        }
+        
 
         return;
     }

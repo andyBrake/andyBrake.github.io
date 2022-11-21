@@ -46,6 +46,15 @@ class Card():
 #    Type : 1
 #    Player ID: 1
 #    Status:1         # Status 分类：0 表示Ready， 1 表示 Start
+#    Count : x        # x 表示本局游戏有多少玩家,后续会跟上x个玩家的信息
+#    P0    : Description0
+#    P1    : Description1
+#    P2    : Description2
+#    P3    : Description3
+#    P4    : Description4
+#    P5    : Description5
+#    P6    : Description6
+#    P7    : Description7
 #}
 #### The third kind request 
 #{
@@ -72,13 +81,23 @@ class Request:
             self.type = int(item[1])
         else:
             print("Invalid Request Info parameter")
-
+        # Assign Player ID
         if self.type == MsgType.cMSG_ASSIGN_ID :
             self.name:str = req[1].strip('\n').strip().split(':')[1]
             self.id:int = int(req[2].strip('\n').strip().split(':')[1])
+        # Sync Status 0 or 1
         elif self.type == MsgType.cMSG_SYNC_STATUS:
             self.id = int(req[1].strip('\n').strip().split(':')[1])
             self.status:int = int(req[2].strip('\n').strip().split(':')[1])
+            self.totalPlayerCnt : int(req[3].strip('\n').strip().split(':')[1])
+            self.desc:list[str] = []
+            
+            for i in range(0, 8):
+                print(" Try to get player %u"%i)
+                print(req[4 + i].strip('\n').strip().split(':')[1])
+                self.desc.append(req[4 + i].strip('\n').strip().split(':')[1])
+            
+        # Acquire Player Action
         elif self.type == MsgType.cMSG_ACQ_ACTION:
             self.id:int = int(req[1].strip('\n').strip().split(':')[1])
             self.option:int = int(req[2].strip('\n').strip().split(':')[1])
@@ -86,6 +105,7 @@ class Request:
             self.behind:int = int(req[4].strip('\n').strip().split(':')[1])
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
             self.status:int = int(req[6].strip('\n').strip().split(':')[1])
+        # Adjust Player total bet
         elif self.type == MsgType.cMSG_ADJUST_BET:
             self.id:int = int(req[1].strip('\n').strip().split(':')[1])
             self.adjust:int = int(req[2].strip('\n').strip().split(':')[1])
@@ -94,16 +114,16 @@ class Request:
         
 
     def display(self):
-        print("Request type:%u"%(self.type))
+        print("\tRequest type:%u"%(self.type))
         if (MsgType.cMSG_ASSIGN_ID == self.type):
-            print("Name:%s, ID:%u"%(self.name, self.id))
+            print("\tName:%s, ID:%u"%(self.name, self.id))
         elif (MsgType.cMSG_SYNC_STATUS == self.type):
-            print("ID: %u, Status:%u"%(self.id, self.status))
+            print("\tID: %u, Status:%u"%(self.id, self.status))
         elif (MsgType.cMSG_ACQ_ACTION == self.type):
-            print("ID:%u, Option:%u, Bet:%u, Behind:%u, Bonus:%u, Status:%u"
+            print("\tID:%u, Option:%u, Bet:%u, Behind:%u, Bonus:%u, Status:%u"
                 %(self.id, self.option, self.bet, self.behind, self.bonus, self.status))
         elif self.type == MsgType.cMSG_ADJUST_BET:
-            print("ID: %u, Adjust Bet:%u"%(self.id, self.adjust))
+            print("\tID: %u, Adjust Bet:%u"%(self.id, self.adjust))
 
 
 
