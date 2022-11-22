@@ -161,6 +161,7 @@ enum MsgType
     cMSG_SYNC_STATUS = 1,     // Sync the status to 1 ready
     cMSG_ACQ_ACTION   = 2,     // acquire and response player action
     cMSG_ADJUST_BET    = 3,     // adjust the player total bet
+    cMSG_SEND_CARD    = 4,     // Send Card to Client
     
     cMSG_INV                    = 10
 
@@ -267,8 +268,32 @@ public:
         return;
     }
 
+    void fillCardMsg(char msg[], int id, int cardCnt, Card cards[])
+    {
+        const char * type4format = "Type:%u;\nPlayer ID:%d;\nCardCnt:%u;\n"\
+                                                            "Card0Type:%d;\nCard0Value:%d;\n"\
+                                                            "Card1Type:%d;\nCard1Value:%d;\n"\
+                                                            "Card2Type:%d;\nCard2Value:%d;\n";  // at most 3 card once send
+        
+        /* send public card */
+        if (id < 0)
+        {
+            cout<<"Send public Card"<<endl;
+        }
+        /* send player private card */
+        else
+        {
+            cout<<"Send private Card"<<endl;
+        }
+        sprintf(msg, type4format, MsgType::cMSG_SEND_CARD, id, cardCnt,
+                int(cards[0].color), int(cards[0].value),
+                int(cards[1].color), int(cards[1].value),
+                int(cards[2].color), int(cards[2].value));
+        return;
+    }
+
     /* status : 1 means Ready, 0 means Wait */
-    void fillSyncMsg(char msg[], int id, int status)
+    void fillSyncMsg(char msg[], int id, int status, char desc[8][50] )  
     {
         const char * type1format = "Type:%u;\nPlayer ID:%u;\nStatus:%u\n";
         const char * allPlayerInfoFormat = "Type:%u;\nPlayer ID:%u;\nStatus:%u;\nCount:%u;\n"  \
@@ -282,14 +307,14 @@ public:
         else if (1 == status)
         {
             sprintf(msg, allPlayerInfoFormat, MsgType::cMSG_SYNC_STATUS, id, status, 3, // total player count
-                "None",   // P0
-                "None",   // P1
-                "None",   // P2
-                "None",   // P3
-                "None",   // P4
-                "None",   // P5
-                "None",   // P6
-                "None"    // P7
+                desc[0],   // P0
+                desc[1],   // P1
+                desc[2],   // P2
+                desc[3],   // P3
+                desc[4],   // P4
+                desc[5],   // P5
+                desc[6],   // P6
+                desc[7]    // P7
                 );
         }
         else
@@ -426,9 +451,18 @@ public:
 
         this->type       = itemValue[0];
         this->playerId = itemValue[1];
-        this->action     = itemValue[2];
+        this->action     = itemValue[2]; // PlayerAction
         this->bet         = itemValue[3];
         this->totalBet = itemValue[4];
+
+        if (this->action == cPLAYER_FOLD)
+        {
+            this->isFold = true;
+        }
+        else if (this->action == cPLAYER_ALLIN)
+        {
+            this->isAllIn = true;
+        }
 
         return;
     }
@@ -463,7 +497,7 @@ public:
     /* The response message field */
     int type;        //Message Type
     int playerId; // Player ID
-    int action;    // Player Action
+    int action;    // Player Action  : PlayerAction
     int bet;         // Player Pay Bet
     int totalBet;  // Player remind total bet
     

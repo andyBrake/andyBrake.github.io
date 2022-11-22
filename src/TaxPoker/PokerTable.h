@@ -85,13 +85,16 @@ public:
     int addRobotPlayer(void)
     {
         int playerId = -1;
+        char name[20];
 
         for (int i=0; i<cMaxPlayerCount; i++)
         {
             if (allPlayer[i] == NULL)
             {
                 playerId = i;
+                sprintf(name, "Robot %u", i);
                 allPlayer[i] = new Robot(i);
+                allPlayer[i]->setName(name);
 
                 cout<<"Add Robot Player to ID "<<playerId<<endl;
                 break;
@@ -114,6 +117,7 @@ public:
                 RemotePlayer *pRemotePlayer = new RemotePlayer(playerId);
                 pRemotePlayer->setSockId(playerSockId);
                 pRemotePlayer->setName(name);
+                pRemotePlayer->setExtraLoad((void *)&this->playerDesc);
                 pRemotePlayer->notifyPlayerId();
                 allPlayer[i] = pRemotePlayer;
 
@@ -128,7 +132,21 @@ public:
     /* To active these waiting player */
     void update()
     {
+        char lastAction[10] = " NA ";
         this->playerCount = 0;
+
+        /*Collect all player info firstly*/
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            if (allPlayer[i] != NULL)
+            {
+                this->playerDesc.set(i, allPlayer[i]->getName(), allPlayer[i]->getTotalBet(), lastAction);
+            }
+            else
+            {
+                strcpy(this->playerDesc.desc[i], " None ");
+            }
+        }
 
         for (int i=0; i<cMaxPlayerCount; i++)
         {
@@ -388,6 +406,19 @@ public:
 
         dealer.splitCard(splitCardNum);
         dealer.dealCard(dealCardNum, &this->publicCards[this->dealedCardCount]);
+
+        /* notify all player this public cards info */
+        for (int i=0; i<cMaxPlayerCount; i++)
+        {
+            Player *player = this->allPlayer[i];
+            
+            if (NULL == player)
+            {
+                continue;
+            }
+            player->notifyPublicCards(dealCardNum, &this->publicCards[this->dealedCardCount]);
+        }
+
         #if 0
         for (int i = 0; i < dealCardNum; i++)
         {
@@ -729,6 +760,7 @@ private:
     Dealer dealer;
     Card publicCards[ePublicCardNum];
     SimpleChannel channel;
+    PlayerDesc playerDesc;
 
     int playerCount; // how many active player in this round game
     int maxActivePlayerId; // the max Player ID in active status

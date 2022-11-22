@@ -18,6 +18,20 @@ enum PlayerStatus
     PS_Playing
 };
 
+class PlayerDesc
+{
+    
+    public:
+        char desc[8][50];
+
+        void set(int id, const char* name, int totalBet, char lastAction[])
+        {
+            const char *playerInfoFormat = "%s (%u) (%s) "; // name + total_bet + last_action
+            sprintf(desc[id], playerInfoFormat, name, totalBet, lastAction);
+            return;
+        }
+};
+
 class Player
 {
 public:
@@ -30,6 +44,11 @@ public:
 
     ~Player()
     {
+    }
+
+    virtual bool isRemotePlayer()
+    {
+        return false;
     }
 
     void init(int pos)
@@ -55,6 +74,16 @@ public:
         strncpy(this->name, name, cMaxNameLen);
     }
 
+    const char *getName(void) const
+    {
+        return this->name;
+    }
+
+    virtual void notifyPublicCards(const int cardCnt, Card *outCards)
+    {
+        return;
+    }
+
     virtual void adjustBet(int change)
     {
         this->totalBet += change;
@@ -65,6 +94,11 @@ public:
         }
         cout<<"Player "<<this->id<<" adjust bet "<<change<<" to total "<<this->totalBet<<endl;
         return;
+    }
+
+    int getTotalBet()const
+    {
+        return this->totalBet;
     }
 
     bool getBlind()
@@ -117,7 +151,7 @@ public:
         return this->isAllIn;
     }
 
-    void setCard(Card &card0, Card &card1)
+    virtual void setCard(Card &card0, Card &card1)
     {
         this->cards[0] = card0;
         this->cards[1] = card1;
@@ -158,6 +192,16 @@ public:
     virtual void getAction(bool &isFold, bool &isAllin, int &bet)
     {
         cout<<"Default Player get action"<<endl;
+    }
+
+    virtual void setExtraLoad(void *p)
+    {
+        return;
+    }
+
+    virtual void * getExtraLoad() const
+    {
+        return NULL;
     }
 
 protected:
@@ -313,6 +357,11 @@ public:
         return;
     }
 
+    virtual bool isRemotePlayer()
+    {
+        return true;
+    }
+
     void setSockId(int sockId)
     {
         this->playerSockId = sockId;
@@ -337,12 +386,41 @@ public:
         }while(0);
     }
 
+    virtual void notifyPublicCards(const int cardCnt, Card *outCards)
+    {
+        Card cards[3];
+
+        assert(cardCnt <= 3);
+
+        for (int i=0; i<cardCnt; i++)
+        {
+            cards[i] = outCards[i];
+        }
+        
+        memset(msg, 0, sizeof(msg));
+        request.fillCardMsg(msg, -1, cardCnt, cards);
+
+        send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
+
+        cout<<"Public Cards Send Request:\n{\n"<<msg<<"}"<<endl;
+        sleep(1);
+        
+        do
+        {
+            memset(msg, 0, sizeof(msg));
+            recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
+
+            cout<<"Confirm Cards, Rcv Reponse:\n{\n"<<msg<<"}"<<endl;
+        }while(0);
+    }
+
     virtual void active()
     {
         Player::active();
+
         /* Notify the Remote Player Start Game */
         memset(msg, 0, sizeof(msg));
-        request.fillSyncMsg(msg, this->id, ClientStatus::cSTATUS_READY);
+        request.fillSyncMsg(msg, this->id, ClientStatus::cSTATUS_READY, this->pDesc->desc);
 
         send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
 
@@ -362,6 +440,34 @@ public:
         return;
     }
 
+    virtual void setCard(Card &card0, Card &card1)
+    {
+        Player::setCard(card0, card1);
+
+        Card cards[3] = {card0, card1, Card()};
+        
+        /* Notify remote player */
+        memset(msg, 0, sizeof(msg));
+        request.fillCardMsg(msg, this->id, 2, cards);
+
+        send(this->playerSockId, (char*)&msg[0], strlen(msg), 0);
+
+        cout<<"Start Send Request:{\n"<<msg<<"}"<<endl;
+        sleep(1);
+
+        /* Waiting for resp */
+        do
+        {
+            memset(msg, 0, sizeof(msg));
+            recv(this->playerSockId, (char*)msg, sizeof(msg), 0);
+
+            cout<<"Confirm Card , Rcv Reponse:{\n"<<msg<<"}"<<endl;
+        }while(0);
+
+        cout<<endl;
+
+        return;
+    }
     
     virtual void adjustBet(int change)
     {
@@ -455,7 +561,7 @@ public:
 
     }
 
-    virtual void getAction(bool &isFold, bool &isAllin, int &bet)
+    virtual void getAction(bool &isFoldPara, bool &isAllinPara, int &bet)
     {
         int loop = cRemoteTimeOut * 10;
         int len = 0;
@@ -478,12 +584,12 @@ public:
 
         this->response.Analysis(msg);
 
-        isFold = this->response.isFold;
-        isAllIn = this->response.isAllIn;
+        isFoldPara = this->response.isFold;
+        isAllinPara = this->response.isAllIn;
         bet = this->response.getBet();
         /* Update Player status */
-        this->isStay = !isFold;
-        this->isAllIn = isAllIn;
+        this->isStay = !isFoldPara;
+        this->isAllIn = isAllinPara;
         this->totalBet -= bet;
         if (response.getTotalBet() != this->totalBet)
         {
@@ -495,8 +601,20 @@ public:
         return;
     }
 
+    virtual void setExtraLoad(void *p)
+    {
+        this->pDesc = (PlayerDesc *)p;
+        return;
+    }
+
+    virtual void * getExtraLoad() const
+    {
+        return (void *)pDesc;
+    }
 private:
     char msg[1024];
+    PlayerDesc *pDesc;
+    //char pDesc[PokerTable::cMaxPlayerCount][Player::cMaxNameLen * 2];
     Server2ClientMsg request;
     Client2ServerMsg response;
     int playerSockId;

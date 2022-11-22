@@ -9,4 +9,5 @@ class Player:
         self.total_bet:int = total_bet # 还剩余的总bet
         self.isBlind:bool = False # 是否是Blind 玩家
         self.isAllin:bool = False
+        self.isFold :bool = False
         self.action:str = "Option"

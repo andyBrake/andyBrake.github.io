@@ -8,6 +8,7 @@ class CardType(IntEnum):
     cCARD_HEART = 1 # 红桃    \u2661
     cCARD_CLUB  = 2 # 梅花    \u2663
     cCARD_DIAMOND = 3 # 方片    \u2662
+    cCARD_TYPE_INV = 4
 
 
 @unique
@@ -16,6 +17,7 @@ class MsgType(IntEnum):
     cMSG_SYNC_STATUS = 1 # Sync the status to 1 ready
     cMSG_ACQ_ACTION = 2 # acquire and response player action
     cMSG_ADJUST_BET =3  # adjust the player total bet
+    cMSG_SEND_CARD  = 4 # Server send the Card info to Client
     cMSG_INV        = 10
 
 @unique
@@ -27,10 +29,51 @@ class PlayerAction(IntEnum):
     cPLAYER_ALLIN = 4
     cPLAYER_INV   = 10
 
+##############################################################################
+#     The Game Stage
+#
+##############################################################################
+@unique
+class GameStatus(IntEnum):
+    GS_Init = 0           #下盲注
+    GS_preFlop  = 1        #翻牌前
+    GS_postFlop = 2       #翻牌后
+    GS_Turn  = 3           #转牌后
+    GS_River = 4          #河牌后
+    GS_Final =5             #最后比大小
+
+
 class Card():
     def __init__(self, t:CardType, v:int):
         self.t = t
         self.v = v
+        # for the Card Type
+        if CardType.cCARD_SPADE == t:
+            type = '\u2664'
+        elif CardType.cCARD_HEART == t:
+            type = '\u2661'
+        elif CardType.cCARD_CLUB == t:
+            type = '\u2663'
+        elif CardType.cCARD_DIAMOND == t:    
+            type = '\u2662'
+        else:
+            type = ' '
+        # for the Card value
+        if v >= 2 and v <= 10:
+            value = str(v)
+        elif v == 11: # J
+            value = 'J'
+        elif v == 12 : # Q
+            value = 'Q'
+        elif v == 13 : # K
+            value = 'K'
+        elif v == 14: # A
+            value = 'A'
+        else:
+            value = ' '
+        
+        self.str = "{type}{value}".format(type=type, value=value)
+        print("Card %s"%self.str)
 
 #####################################################################
 # The Request message came from Server, send to Client
@@ -84,6 +127,8 @@ class Card():
 #####################################################################
 class Request:
     def __init__(self, info:str):
+        self.desc:list[str] = []
+
         req = info.strip('\n').strip().split(';')
         # confirm the type firstly
         item = req[0].strip('\n').strip().split(':')
@@ -100,8 +145,7 @@ class Request:
             self.id = int(req[1].strip('\n').strip().split(':')[1])
             self.status:int = int(req[2].strip('\n').strip().split(':')[1])
             self.totalPlayerCnt:int = int(req[3].strip('\n').strip().split(':')[1])
-            self.desc:list[str] = []
-            
+
             for i in range(0, 8):
                 print(" Try to get player %u"%i)
                 print(req[4 + i].strip('\n').strip().split(':')[1])
@@ -116,7 +160,7 @@ class Request:
             self.bonus:int = int(req[5].strip('\n').strip().split(':')[1])
             self.status:int = int(req[6].strip('\n').strip().split(':')[1])
             self.totalPlayerCnt : int(req[7].strip('\n').strip().split(':')[1])
-            self.desc:list[str] = []
+            
             for i in range(0, 8):
                 print(" Try to get player %u"%i)
                 print(req[7 + i].strip('\n').strip().split(':')[1])
@@ -125,6 +169,16 @@ class Request:
         elif self.type == MsgType.cMSG_ADJUST_BET:
             self.id:int = int(req[1].strip('\n').strip().split(':')[1])
             self.adjust:int = int(req[2].strip('\n').strip().split(':')[1])
+        # Receive the Card info    
+        elif self.type == MsgType.cMSG_SEND_CARD:
+            self.id:int = int(req[1].strip('\n').strip().split(':')[1])
+            self.cardCnt:int = int(req[2].strip('\n').strip().split(':')[1])
+            self.card0type:int  = int(req[3].strip('\n').strip().split(':')[1])
+            self.card0value:int = int(req[4].strip('\n').strip().split(':')[1])
+            self.card1type:int  = int(req[5].strip('\n').strip().split(':')[1])
+            self.card1value:int = int(req[6].strip('\n').strip().split(':')[1])
+            self.card2type:int  = int(req[7].strip('\n').strip().split(':')[1])
+            self.card2value:int = int(req[8].strip('\n').strip().split(':')[1])
         else:
             print("Invalid Request Type"%self.type)
         
@@ -140,6 +194,11 @@ class Request:
                 %(self.id, self.option, self.bet, self.behind, self.bonus, self.status))
         elif self.type == MsgType.cMSG_ADJUST_BET:
             print("\tID: %u, Adjust Bet:%u"%(self.id, self.adjust))
+        elif self.type == MsgType.cMSG_SEND_CARD:
+            print("\tID: %d, Card Cnt: %u, Cards: %d-%d, %d-%d, %d-%d"%(self.id, self.cardCnt,
+                self.card0type, self.card0value,
+                self.card1type, self.card1value,
+                self.card2type, self.card2value))
 
 
 
@@ -203,6 +262,11 @@ class Response:
         self.total_bet = total_bet
         return
 
+    def setSendCardType(self, id:int):
+        self.type = MsgType.cMSG_SEND_CARD
+        self.id:int = id
+        self.result = 0
+
     def toString(self) -> str:
         type0format = "Type : {type};\nPlayer Name: {name}\n"
         type1format = "Type : {type};\nPlayer ID: {id};\nStatus:{status}\n"
@@ -218,6 +282,8 @@ class Response:
             message = type2format.format(type=2, id=self.PlayerId, action=self.action, bet=self.bet, totalBet = self.total_bet)
         elif self.type == MsgType.cMSG_ADJUST_BET:
             message = type3format.format(type=3, id=self.PlayerId, adjust=self.adjust)
+        elif self.type == MsgType.cMSG_SEND_CARD:
+            message = type1format.format(type=4, id=self.id, status=self.result) # Server doesn't care about this resp
         else:
             message = "Invalid Type!!!!"
             print("To String get invalid type %u"%self.type)
