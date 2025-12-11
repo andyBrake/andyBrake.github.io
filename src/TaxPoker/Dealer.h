@@ -154,6 +154,32 @@ class Dealer
         return;
     }
 
+    // High-level deal functions for better readability
+    
+    // Deal 2 hole cards to a player
+    void dealHoleCards(Card *playerCards)
+    {
+        dealCard(2, playerCards);
+    }
+
+    // Deal 3 flop cards to public board
+    void dealFlop(Card *flopCards)
+    {
+        dealCard(3, flopCards);
+    }
+
+    // Deal 1 turn card to public board
+    void dealTurn(Card &turnCard)
+    {
+        dealCard(1, &turnCard);
+    }
+
+    // Deal 1 river card to public board
+    void dealRiver(Card &riverCard)
+    {
+        dealCard(1, &riverCard);
+    }
+
     void acquireSpecialCard(Card card)
     {
         int offsett = getCardBitOffset(card);

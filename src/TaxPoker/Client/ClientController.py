@@ -1,6 +1,3 @@
-
-
-
 #TCP Client客户端 封装成类
 import socket,threading,logging,datetime
 import Common  
@@ -44,13 +41,20 @@ class ClientController:
 
 
     def start(self):
-        self.sock.connect(self.addr)
-        self.state = ClientState.cCONNECTED # already connect
-        # 准备接收数据，recv是阻塞的，启动新的线程
-        threading.Thread(target=self._recv,name='recv').start()
-        # Init the window
-        self.view.launch_window()
-        sleep(1)
+        try:
+            self.sock.connect(self.addr)
+            self.state = ClientState.cCONNECTED # already connect
+            # 准备接收数据，recv是阻塞的，启动新的线程
+            threading.Thread(target=self._recv,name='recv').start()
+            # Init the window
+            self.view.launch_window()
+            sleep(1)
+        except Exception as e:
+            print(f"连接服务器失败: {e}")
+            # 在GUI中显示错误信息
+            if hasattr(self, 'view') and self.view:
+                self.view.update_sysinfo(f"连接服务器失败: {e}")
+
  
     # 接收Server消息的线程
     def _recv(self):
@@ -63,8 +67,9 @@ class ClientController:
             try:
                 data = self.sock.recv(1024) #阻塞
             except Exception as e:
-                print("!!!!!Rcv Abnormal!!!! |%s|"%data)
-                logging.info(e) #有任何异常保证退出
+                if not self.event.is_set():
+                    print("!!!!!Rcv Abnormal!!!! |%s|"%data)
+                    logging.info(e) #有任何异常保证退出
                 break
 
             if (len(data.strip()) > 0):
@@ -72,9 +77,12 @@ class ClientController:
                 #print(msg)
                 #logging.info("{}".format(data.decode()))
                 print("\t\tRcv Server Msg:%s"%data)
-                self.request = Common.Request(data.decode())
-                self._process(self.request)
-                self._response2server()
+                try:
+                    self.request = Common.Request(data.decode())
+                    self._process(self.request)
+                    self._response2server()
+                except Exception as e:
+                    print(f"处理消息时出错: {e}")
  
     # generate the response to Server
     def _process(self, request:Common.Request):
@@ -85,6 +93,9 @@ class ClientController:
                 self.state = ClientState.cRESP_PLAYER_ID
                 self.syncView = False
                 print("Get the Player ID %u from Server"%request.id)
+                # 更新界面显示玩家ID
+                if hasattr(self, 'view') and self.view:
+                    self.view.update_sysinfo(f"已连接服务器，玩家ID: {request.id}")
             else:
                 print("Invalid state or msg!")
                 return
@@ -157,7 +168,9 @@ class ClientController:
             print("\n")
         else:
             print("Should not here")
-            exit(1)
+            # exit(1)  # 不要直接退出，而是给出提示
+            if hasattr(self, 'view') and self.view:
+                self.view.update_sysinfo("出现未知错误，请重新连接")
         return
 
     # This request must be a cMSG_ACQ_ACTION type, and include these below information
@@ -176,6 +189,9 @@ class ClientController:
         if request.type == Common.MsgType.cMSG_ADJUST_BET:
             self.player.total_bet = self.player.total_bet + request.adjust
             print("Player adjust bet %d to %d"%(request.adjust, self.player.total_bet))
+            # 更新界面显示
+            if hasattr(self, 'view') and self.view:
+                self.view.update_sysinfo(f"筹码调整: {request.adjust}, 当前筹码: {self.player.total_bet}")
             return
 
         if request.type != Common.MsgType.cMSG_ACQ_ACTION:
@@ -185,6 +201,9 @@ class ClientController:
         if request.option == 0:
             self.player.isBlind = True
             self.player.pay_bet = request.bet
+            # 更新界面显示
+            if hasattr(self, 'view') and self.view:
+                self.view.update_sysinfo(f"支付盲注: {request.bet}")
         # Acquire normal bet
         else:
             # Waiting the user action through View
@@ -225,17 +244,17 @@ class ClientController:
 
         if self.request.type == Common.MsgType.cMSG_SYNC_STATUS:
             print("To Update view player info")
-            self.view.update_sysinfo("Player Ready")
+            self.view.update_sysinfo("玩家准备就绪")
             for id in range(len(self.request.desc)):
                 self.view.update_all_player_info(id, self.request.desc[id])
         
         if self.request.type == Common.MsgType.cMSG_ACQ_ACTION:
-            self.view.update_sysinfo("Current Bet: {}".format(self.request.bet))
+            self.view.update_sysinfo("当前下注额: {}".format(self.request.bet))
             self.view.update_bonus(self.request.status, self.request.bonus)
         
         if self.request.type == Common.MsgType.cMSG_SEND_CARD:
             print("  To update card info, id %d, cnt %u"%(self.request.id, self.request.cardCnt))
-            self.view.update_sysinfo("Deliver {} Cards".format(self.request.cardCnt))
+            self.view.update_sysinfo("发牌: {}张".format(self.request.cardCnt))
             self.view.update_cards(self.request.id, self.request.cardCnt, 
                 self.request.card0type, self.request.card0value,
                 self.request.card1type, self.request.card1value,
@@ -280,15 +299,23 @@ class ClientController:
         return rsp
 
     def send(self,msg:str):
-        data = "{}\n".format(msg.strip()).encode()
-        #print("Send Msg:%s"%data)
-        self.sock.send(data)
- 
+        try:
+            data = "{}\n".format(msg.strip()).encode()
+            #print("Send Msg:%s"%data)
+            self.sock.send(data)
+        except Exception as e:
+            print(f"发送消息失败: {e}")
+            if hasattr(self, 'view') and self.view:
+                self.view.update_sysinfo(f"发送消息失败: {e}")
+
     def stop(self):
         #logging.info("{} broken".format(self.addr))
         self.event.set()
-        self.sock.close()
- 
+        try:
+            self.sock.close()
+        except:
+            pass
+
         self.event.wait(3)
         
         logging.info("Client Close")
@@ -296,21 +323,23 @@ class ClientController:
  
 def main():
     #e = threading.Event()
-    cc = ClientController()
+    player = Player(name = "Fa", id=-1, total_bet = 500)
+    cc = ClientController(p=player)
     cc.start()
- 
-    loop = 20
-    while True:
-        #msg = input(">> ")
-        loop = loop - 1
-        sleep(1)
-        #if msg.strip() == 'exit':
-        if loop == 0:
-            #cc.send(msg)
-            cc.stop()
-            break
 
-        #cc.send(msg)
+    # 移除自动退出逻辑，让玩家可以持续游戏
+    # loop = 20
+    # while True:
+    #     #msg = input(">> ")
+    #     loop = loop - 1
+    #     sleep(1)
+    #     #if msg.strip() == 'exit':
+    #     if loop == 0:
+    #         #cc.send(msg)
+    #         cc.stop()
+    #         break
+
+    #     #cc.send(msg)
     pass
   
 if __name__ == '__main__':

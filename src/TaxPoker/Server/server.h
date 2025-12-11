@@ -18,8 +18,9 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <fstream>
-
 #include <pthread.h>
+#include <memory>   // for std::unique_ptr
+#include <atomic>   // for std::atomic
 
 #include "../types.h"
 #include "../PokerTable.h"
@@ -32,21 +33,17 @@ public:
 
     Server()
     {
-        pTable = NULL;
+        pTable = nullptr;
     }
 
     ~Server()
     {
-        if (pTable != NULL)
-        {
-            delete pTable;
-            pTable = NULL;
-        }
+        // Smart pointer automatically cleans up
     }
 
-    void init()
+    void init(int maxPlayerCnt = 3)
     {
-        pTable = new PokerTable(2);
+        pTable = std::make_unique<PokerTable>(maxPlayerCnt);
         
         isPlayerReady = false;
 
@@ -63,7 +60,7 @@ public:
     {
         int playerCnt = 0;
 
-        assert(NULL != pTable);
+        assert(pTable != nullptr);
         
         while(playerCnt < leastPlayerCnt)
         {
@@ -119,7 +116,7 @@ public:
         }
 
         //bind the socket to its local address
-        int bindStatus = bind(this->serverSockId, (struct sockaddr*) &servAddr, sizeof(servAddr));
+        int bindStatus = ::bind(this->serverSockId, (struct sockaddr*) &servAddr, sizeof(servAddr));
         if(bindStatus < 0)
         {
             cerr << "Error binding socket to local address, err " << bindStatus<< endl;
@@ -160,7 +157,7 @@ public:
 
     void startGame()
     {
-        assert(NULL != pTable);
+        assert(pTable != nullptr);
 
         pTable->update();
 
@@ -169,8 +166,7 @@ public:
 
     void stop()
     {
-        close(this->serverSockId);
-        close(serverSockId);
+        close(this->serverSockId);  // Only close once
 
         pthread_join(tidListen, NULL);
 
@@ -181,8 +177,8 @@ public:
     }
 
 private:
-    PokerTable *pTable;
-    volatile bool isPlayerReady;
+    std::unique_ptr<PokerTable> pTable;  // Use smart pointer for automatic memory management
+    std::atomic<bool> isPlayerReady;     // Use atomic for thread-safe boolean
     pthread_t tidListen;
     int  serverSockId;
 

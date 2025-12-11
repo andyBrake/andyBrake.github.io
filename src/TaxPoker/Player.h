@@ -1,6 +1,9 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include <unistd.h>       // for sleep, close
+#include <sys/socket.h>   // for send, recv
+#include <cstring>        // for strlen, strncpy
 #include "types.h"
 
 enum PlayerType

@@ -1,0 +1,13 @@
+{
+    // VSCode 推荐安装的扩展
+    "recommendations": [
+        // C/C++ 官方插件 - 提供 IntelliSense、调试、代码浏览等功能
+        "ms-vscode.cpptools",
+        
+        // C/C++ 扩展包 - 包含主题和额外工具
+        "ms-vscode.cpptools-extension-pack",
+        
+        // C/C++ Themes - C++ 语法高亮主题
+        "ms-vscode.cpptools-themes"
+    ]
+}

@@ -349,7 +349,7 @@ public:
         int pos = startPos;
         do
         {
-            dealer.dealCard(ePrivateCardNum, privateCard);
+            dealer.dealHoleCards(privateCard);  // Use high-level function
             Player *curPlayer = allPlayer[pos];
             if (NULL == curPlayer)
             {
@@ -405,7 +405,20 @@ public:
         getDealCount(dealCardNum, splitCardNum);
 
         dealer.splitCard(splitCardNum);
-        dealer.dealCard(dealCardNum, &this->publicCards[this->dealedCardCount]);
+        
+        // Use high-level deal functions for better readability
+        if (this->status == GS_postFlop)
+        {
+            dealer.dealFlop(&this->publicCards[this->dealedCardCount]);
+        }
+        else if (this->status == GS_Turn)
+        {
+            dealer.dealTurn(this->publicCards[this->dealedCardCount]);
+        }
+        else if (this->status == GS_River)
+        {
+            dealer.dealRiver(this->publicCards[this->dealedCardCount]);
+        }
 
         /* notify all player this public cards info */
         for (int i=0; i<cMaxPlayerCount; i++)

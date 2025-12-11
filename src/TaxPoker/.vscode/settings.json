@@ -1,0 +1,53 @@
+{
+    // 在文件资源管理器中隐藏以下文件和目录
+    "files.exclude": {
+        "**/*.out": true,
+        "**/*.o": true
+    },
+    
+    // 在搜索中排除以下文件和目录
+    "search.exclude": {
+        "**/*.out": true,
+        "**/*.o": true
+    },
+    
+    // 在文件监视器中排除以下文件和目录（提高性能）
+    "files.watcherExclude": {
+        "**/*.out": true,
+        "**/*.o": true
+    },
+
+    // C/C++ 扩展配置
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.autocomplete": "default",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.cStandard": "c17",
+    
+    // 增强 IntelliSense 功能
+    "C_Cpp.enhancedColorization": "enabled",
+    "C_Cpp.inlayHints.parameterNames.enabled": true,
+    "C_Cpp.inlayHints.referenceOperator.enabled": true,
+    
+    // 右键菜单功能相关
+    "editor.gotoLocation.multipleDefinitions": "peek",
+    "editor.gotoLocation.multipleReferences": "peek",
+    "editor.gotoLocation.multipleImplementations": "peek",
+    
+    // 代码提示和补全
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": false
+    },
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.wordBasedSuggestions": "matchingDocuments",
+    
+    // 文件关联
+    "files.associations": {
+        "*.h": "cpp",
+        "iostream": "cpp",
+        "*.tcc": "cpp",
+        "ostream": "cpp"
+    }
+}

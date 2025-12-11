@@ -1,0 +1,26 @@
+[
+    // Cmd+Z: Peek Definition (查看定义预览)
+    {
+        "key": "cmd+z",
+        "command": "editor.action.peekDefinition",
+        "when": "editorHasDefinitionProvider && editorTextFocus && !inReferenceSearchEditor && !isInEmbeddedEditor"
+    },
+    // 由于 Cmd+Z 被占用，将撤销操作改为 Cmd+U
+    {
+        "key": "cmd+u",
+        "command": "undo",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    // Cmd+Shift+Z: Go to Definition (跳转到定义)
+    {
+        "key": "cmd+shift+z",
+        "command": "editor.action.revealDefinition",
+        "when": "editorHasDefinitionProvider && editorTextFocus && !isInEmbeddedEditor"
+    },
+    // Alt+Cmd+Z: Peek References (查看所有引用)
+    {
+        "key": "alt+cmd+z",
+        "command": "editor.action.referenceSearch.trigger",
+        "when": "editorHasReferenceProvider && editorTextFocus && !inReferenceSearchEditor && !isInEmbeddedEditor"
+    }
+]

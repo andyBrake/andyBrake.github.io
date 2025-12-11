@@ -41,7 +41,7 @@ public:
         return false;
     }
 
-    int enqueue(T &item)
+    int enqueue(const T &item)  // Accept const reference
     {
         if (isFull())
         {
@@ -73,7 +73,7 @@ public:
         return 0;
     }
 
-    bool isExist(T &obj)
+    bool isExist(const T &obj) const  // Accept const reference and make method const
     {
         for (int i = head; i != tail; i = (i + 1) % this->depth)
         {

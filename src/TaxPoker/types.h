@@ -398,6 +398,21 @@ public:
         this->bet = msg.bet;
     }
 
+    // Add copy assignment operator (needed because of const member)
+    Client2ServerMsg& operator=(const Client2ServerMsg &msg)
+    {
+        if (this != &msg) {
+            this->playerId = msg.playerId;
+            this->isFold = msg.isFold;
+            this->isAllIn = msg.isAllIn;
+            this->bet = msg.bet;
+            this->totalBet = msg.totalBet;
+            this->type = msg.type;
+            this->action = msg.action;
+        }
+        return *this;
+    }
+
     bool operator==(const Client2ServerMsg &msg)
     {
         if (this->playerId == msg.playerId && this->isFold == msg.isFold && this->isAllIn == msg.isAllIn && this->bet == msg.bet)
