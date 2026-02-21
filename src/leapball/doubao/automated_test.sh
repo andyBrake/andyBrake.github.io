@@ -229,8 +229,8 @@ PY
 done
 
 echo "\n测试汇总："
-echo "总用例: $tests_total，已通过: $tests_pass，失败: $tests_fail"
-if [ $tests_fail -eq 0 ]; then
+echo "总用例: ${tests_total:-0}，已通过: ${tests_pass:-0}，失败: ${tests_fail:-0}"
+if [ ${tests_fail:-0} -eq 0 ]; then
   echo "全部测试通过 ✅"
   exit 0
 else
